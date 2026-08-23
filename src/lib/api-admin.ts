@@ -138,6 +138,44 @@ export async function adminDeactivateVariant(slug: string, variantId: string): P
   });
 }
 
+export interface UploadedImageDto {
+  id: string;
+  url: string;
+  altText: string;
+  displayOrder: number;
+  productVariantId: string | null;
+}
+
+// No Content-Type header — the browser sets multipart/form-data with the
+// correct boundary itself; setting it manually strips the boundary and the
+// API can't parse the body.
+export async function adminUploadImage(
+  slug: string,
+  file: File,
+  altText: string,
+  displayOrder: number,
+  variantId: string | null,
+): Promise<UploadedImageDto> {
+  const form = new FormData();
+  form.append("File", file);
+  form.append("AltText", altText);
+  form.append("DisplayOrder", String(displayOrder));
+  if (variantId) {
+    form.append("ProductVariantId", variantId);
+  }
+  const res = await authedFetch(`/api/products/${encodeURIComponent(slug)}/images`, {
+    method: "POST",
+    body: form,
+  });
+  return res.json();
+}
+
+export async function adminDeleteImage(slug: string, imageId: string): Promise<void> {
+  await authedFetch(`/api/products/${encodeURIComponent(slug)}/images/${imageId}`, {
+    method: "DELETE",
+  });
+}
+
 // Brand/category lists don't need auth (public endpoints already expose Id —
 // see BrandListItemDto's comment on the API side) but live here since only
 // admin screens use them.

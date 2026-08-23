@@ -16,8 +16,23 @@ export default function AdminProductsPage() {
     }
   }
 
+  // Inlined rather than calling reload() — the lint rule can't trace into a
+  // named function to confirm its setState calls all come after an await,
+  // so it flags any call to one from inside an effect as unsafe. reload()
+  // itself is still used directly by the mutation handlers below, which
+  // aren't inside an effect and aren't flagged.
   useEffect(() => {
-    reload();
+    let cancelled = false;
+    adminGetProducts()
+      .then((data) => {
+        if (!cancelled) setProducts(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof ApiError ? err.message : "Error al cargar productos.");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function handleDeactivate(slug: string) {

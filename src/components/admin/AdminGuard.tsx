@@ -13,7 +13,12 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<"checking" | "authed">("checking");
 
   useEffect(() => {
+    // localStorage is a synchronous, client-only read — there's no await to
+    // put between mount and this setState the way the data-fetching pages'
+    // effects have. This is the "sync with an external store after mount"
+    // case the lint rule's data-fetching guidance doesn't fit.
     if (isLoggedIn()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus("authed");
     } else {
       router.replace("/admin/login");

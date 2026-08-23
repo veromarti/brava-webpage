@@ -6,12 +6,14 @@ import {
   adminUpdateProduct,
   adminCreateVariant,
   adminDeactivateVariant,
+  adminUploadImage,
+  adminDeleteImage,
   getBrandsForAdmin,
   getCategoriesForAdmin,
   getProductForAdmin,
   ApiError,
 } from "@/lib/api-admin";
-import type { BrandListItemDto, CategoryListItemDto, ProductVariantDto } from "@/lib/api";
+import type { BrandListItemDto, CategoryListItemDto, ProductVariantDto, ImageDto } from "@/lib/api";
 
 interface ProductForEdit {
   id: string;
@@ -22,6 +24,7 @@ interface ProductForEdit {
   categoryName: string;
   isActive: boolean;
   variants: ProductVariantDto[];
+  images: ImageDto[];
 }
 
 const emptyVariantForm = {
@@ -47,28 +50,50 @@ export default function EditProductPage() {
   const [isActive, setIsActive] = useState(true);
 
   const [variantForm, setVariantForm] = useState(emptyVariantForm);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageAltText, setImageAltText] = useState("");
+  const [imageVariantId, setImageVariantId] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  async function reload() {
-    const [p, b, c] = await Promise.all([
-      getProductForAdmin(slug),
-      getBrandsForAdmin(),
-      getCategoriesForAdmin(),
-    ]);
+  function applyLoadedProduct(p: ProductForEdit, b: BrandListItemDto[], c: CategoryListItemDto[]) {
     setProduct(p);
     setBrands(b);
     setCategories(c);
     setName(p.name);
     setDescription(p.description);
     setIsActive(p.isActive);
-    setBrandId(b.find((x: BrandListItemDto) => x.name === p.brandName)?.id ?? "");
-    setCategoryId(c.find((x: CategoryListItemDto) => x.name === p.categoryName)?.id ?? "");
+    setBrandId(b.find((x) => x.name === p.brandName)?.id ?? "");
+    setCategoryId(c.find((x) => x.name === p.categoryName)?.id ?? "");
   }
 
+  // Used by mutation handlers below (not inside an effect, so the
+  // set-state-in-effect lint rule doesn't apply to these call sites).
+  async function reload() {
+    const [p, b, c] = await Promise.all([
+      getProductForAdmin(slug),
+      getBrandsForAdmin(),
+      getCategoriesForAdmin(),
+    ]);
+    applyLoadedProduct(p, b, c);
+  }
+
+  // Inlined rather than calling reload() — see the comment on the same
+  // pattern in admin/products/page.tsx.
   useEffect(() => {
-    reload().catch((err) => setError(err instanceof ApiError ? err.message : "Error al cargar."));
+    let cancelled = false;
+    Promise.all([getProductForAdmin(slug), getBrandsForAdmin(), getCategoriesForAdmin()])
+      .then(([p, b, c]) => {
+        if (!cancelled) applyLoadedProduct(p, b, c);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof ApiError ? err.message : "Error al cargar.");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
   async function handleSaveProduct(e: React.FormEvent) {
@@ -120,6 +145,39 @@ export default function EditProductPage() {
       await reload();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Error al desactivar la variante.");
+    }
+  }
+
+  async function handleUploadImage(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setMessage(null);
+    if (!imageFile) {
+      setError("Selecciona un archivo.");
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      await adminUploadImage(slug, imageFile, imageAltText, product?.images.length ?? 0, imageVariantId || null);
+      setImageFile(null);
+      setImageAltText("");
+      setImageVariantId("");
+      setMessage("Imagen subida.");
+      await reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error al subir la imagen.");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  async function handleDeleteImage(imageId: string) {
+    if (!confirm("¿Eliminar esta imagen?")) return;
+    try {
+      await adminDeleteImage(slug, imageId);
+      await reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error al eliminar la imagen.");
     }
   }
 
@@ -197,6 +255,75 @@ export default function EditProductPage() {
           className="self-start rounded-full bg-brava-pink px-5 py-2.5 font-medium text-white transition-colors hover:bg-brava-pink-dark disabled:opacity-50"
         >
           {saving ? "Guardando…" : "Guardar cambios"}
+        </button>
+      </form>
+
+      <h2 className="mt-10 text-xl font-bold text-brava-ink">Imágenes</h2>
+      {product.images.length > 0 && (
+        <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4">
+          {product.images.map((img) => (
+            <div key={img.id} className="relative overflow-hidden rounded-xl border border-brava-pink-light">
+              {/* eslint-disable-next-line @next/next/no-img-element -- admin-only thumbnail, not worth next/image's remotePatterns overhead here */}
+              <img src={img.url} alt={img.altText} className="aspect-square w-full object-cover" />
+              <button
+                onClick={() => handleDeleteImage(img.id)}
+                className="absolute right-1 top-1 rounded-full bg-white/90 px-2 py-0.5 text-xs text-red-600 hover:bg-white"
+              >
+                Eliminar
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <form
+        onSubmit={handleUploadImage}
+        className="mt-4 flex flex-col gap-4 rounded-2xl border border-brava-pink-light p-6"
+      >
+        <h3 className="font-medium text-brava-ink">Subir imagen</h3>
+        <div>
+          <label className="block text-sm font-medium text-brava-ink">Archivo (JPEG, PNG o WebP, máx. 5 MB)</label>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            required
+            onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+            className="mt-1 w-full text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brava-ink">Texto alternativo</label>
+          <input
+            required
+            value={imageAltText}
+            onChange={(e) => setImageAltText(e.target.value)}
+            placeholder="Describe la imagen para accesibilidad y SEO"
+            className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
+          />
+        </div>
+        {product.variants.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-brava-ink">Variante (opcional)</label>
+            <select
+              value={imageVariantId}
+              onChange={(e) => setImageVariantId(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-brava-pink-light bg-white px-3 py-2 outline-none focus:border-brava-pink"
+            >
+              <option value="">General del producto</option>
+              {product.variants.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.toneName ?? v.toneCode ?? v.id}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <button
+          type="submit"
+          disabled={uploadingImage}
+          className="self-start rounded-full bg-brava-pink px-5 py-2.5 font-medium text-white transition-colors hover:bg-brava-pink-dark disabled:opacity-50"
+        >
+          {uploadingImage ? "Subiendo…" : "Subir imagen"}
         </button>
       </form>
 
