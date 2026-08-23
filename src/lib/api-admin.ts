@@ -133,6 +133,16 @@ export async function adminCreateVariant(slug: string, payload: CreateVariantPay
   return res.json();
 }
 
+// No body — the API checks the variant's already-stored SellPrice rather
+// than asking the client to resend one. The admin edit page only ever has
+// the public ProductVariantDto loaded (no CostPrice on it), so a full PUT
+// here would silently null CostPrice out from under whatever was there.
+export async function adminActivateVariant(slug: string, variantId: string): Promise<void> {
+  await authedFetch(`/api/products/${encodeURIComponent(slug)}/variants/${variantId}/activate`, {
+    method: "POST",
+  });
+}
+
 export async function adminDeactivateVariant(slug: string, variantId: string): Promise<void> {
   await authedFetch(`/api/products/${encodeURIComponent(slug)}/variants/${variantId}`, {
     method: "DELETE",

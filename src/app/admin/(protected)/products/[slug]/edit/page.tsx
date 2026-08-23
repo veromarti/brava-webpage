@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import {
   adminUpdateProduct,
   adminCreateVariant,
+  adminActivateVariant,
   adminDeactivateVariant,
   adminUploadImage,
   adminLinkImage,
@@ -148,6 +149,19 @@ export default function EditProductPage() {
       await reload();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Error al desactivar la variante.");
+    }
+  }
+
+  // Reactivating a product alone isn't enough to bring it back into the
+  // public catalog if its variants are still inactive (ADR-0003) — this is
+  // the piece that was missing before, so a product could sit "Activo" in
+  // the admin table and still never show up on the site.
+  async function handleActivateVariant(variantId: string) {
+    try {
+      await adminActivateVariant(slug, variantId);
+      await reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error al activar la variante.");
     }
   }
 
@@ -409,12 +423,19 @@ export default function EditProductPage() {
                   )}
                 </td>
                 <td className="py-2">
-                  {v.isActive && (
+                  {v.isActive ? (
                     <button
                       onClick={() => handleDeactivateVariant(v.id)}
                       className="text-brava-muted hover:text-red-600"
                     >
                       Desactivar
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleActivateVariant(v.id)}
+                      className="text-brava-pink-dark hover:underline"
+                    >
+                      Activar
                     </button>
                   )}
                 </td>
