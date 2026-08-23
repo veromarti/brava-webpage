@@ -1,6 +1,13 @@
 import { getProducts } from "@/lib/api";
 import { ProductCard } from "@/components/ProductCard";
 
+// Without this, `next build` tries to statically prerender this page —
+// fetching from the API from inside the build container, which isn't
+// guaranteed network access on every host (broke the Railway build).
+// Forcing per-request rendering also fits ADR-0005 better: prices/stock
+// should be fresh on every request, not baked in at build time.
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const products = await getProducts();
 

@@ -4,6 +4,9 @@ import { getProductBySlug } from "@/lib/api";
 import { formatCop, variantLabel, stockStatus } from "@/lib/format";
 import { buildWhatsAppOrderLink } from "@/lib/whatsapp";
 
+// See the same directive on the home page (src/app/page.tsx) for why.
+export const dynamic = "force-dynamic";
+
 export default async function ProductDetailPage({
   params,
 }: {
