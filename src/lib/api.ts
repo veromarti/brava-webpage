@@ -48,11 +48,13 @@ export interface ProductDetailDto {
 }
 
 export interface BrandListItemDto {
+  id: string;
   slug: string;
   name: string;
 }
 
 export interface CategoryListItemDto {
+  id: string;
   slug: string;
   name: string;
   displayOrder: number;
