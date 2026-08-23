@@ -1,26 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brava-pink: #d6336c;
+  --brava-pink-dark: #a61e4d;
+  --brava-pink-light: #fff0f6;
+  --brava-ink: #2b2230;
+  --brava-bg: #fffbfc;
+  --brava-muted: #8a7a85;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-brava-pink: var(--brava-pink);
+  --color-brava-pink-dark: var(--brava-pink-dark);
+  --color-brava-pink-light: var(--brava-pink-light);
+  --color-brava-ink: var(--brava-ink);
+  --color-brava-bg: var(--brava-bg);
+  --color-brava-muted: var(--brava-muted);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Brand palette is fixed regardless of OS theme — a pink-forward makeup
+   catalog reading in an inverted dark palette isn't the brand, so this
+   deliberately doesn't follow prefers-color-scheme. */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--brava-bg);
+  color: var(--brava-ink);
 }
