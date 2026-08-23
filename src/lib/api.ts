@@ -11,6 +11,7 @@ export interface ProductListItemDto {
   priceFrom: number;
   priceTo: number;
   inStock: boolean;
+  imageUrl: string | null;
 }
 
 export interface ProductVariantDto {

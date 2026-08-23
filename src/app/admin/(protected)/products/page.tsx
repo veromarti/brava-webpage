@@ -61,6 +61,7 @@ export default function AdminProductsPage() {
               <th className="py-2 font-medium">Nombre</th>
               <th className="py-2 font-medium">Marca</th>
               <th className="py-2 font-medium">Categoría</th>
+              <th className="py-2 font-medium">Imágenes</th>
               <th className="py-2 font-medium">Estado</th>
               <th className="py-2 font-medium">Acciones</th>
             </tr>
@@ -71,6 +72,13 @@ export default function AdminProductsPage() {
                 <td className="py-2 text-brava-ink">{p.name}</td>
                 <td className="py-2 text-brava-muted">{p.brandName}</td>
                 <td className="py-2 text-brava-muted">{p.categoryName}</td>
+                <td className="py-2">
+                  {p.imageCount > 0 ? (
+                    <span className="text-brava-muted">{p.imageCount}</span>
+                  ) : (
+                    <span className="font-medium text-red-600">Sin imágenes</span>
+                  )}
+                </td>
                 <td className="py-2">
                   {p.isActive ? (
                     <span className="text-emerald-700">Activo</span>

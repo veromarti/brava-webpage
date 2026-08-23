@@ -57,6 +57,7 @@ export interface AdminProductListItemDto {
   brandName: string;
   categoryName: string;
   isActive: boolean;
+  imageCount: number;
 }
 
 export async function adminGetProducts(): Promise<AdminProductListItemDto[]> {
