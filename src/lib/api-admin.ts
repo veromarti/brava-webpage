@@ -170,6 +170,24 @@ export async function adminUploadImage(
   return res.json();
 }
 
+// For an image already sitting in the R2 bucket (uploaded straight through
+// the Cloudflare dashboard) instead of through the file-upload form above.
+// The API rejects any URL that isn't under this project's own bucket.
+export async function adminLinkImage(
+  slug: string,
+  url: string,
+  altText: string,
+  displayOrder: number,
+  variantId: string | null,
+): Promise<UploadedImageDto> {
+  const res = await authedFetch(`/api/products/${encodeURIComponent(slug)}/images/link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, altText, displayOrder, productVariantId: variantId }),
+  });
+  return res.json();
+}
+
 export async function adminDeleteImage(slug: string, imageId: string): Promise<void> {
   await authedFetch(`/api/products/${encodeURIComponent(slug)}/images/${imageId}`, {
     method: "DELETE",

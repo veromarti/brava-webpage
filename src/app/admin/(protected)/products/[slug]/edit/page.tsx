@@ -7,6 +7,7 @@ import {
   adminCreateVariant,
   adminDeactivateVariant,
   adminUploadImage,
+  adminLinkImage,
   adminDeleteImage,
   getBrandsForAdmin,
   getCategoriesForAdmin,
@@ -50,7 +51,9 @@ export default function EditProductPage() {
   const [isActive, setIsActive] = useState(true);
 
   const [variantForm, setVariantForm] = useState(emptyVariantForm);
+  const [imageSource, setImageSource] = useState<"upload" | "link">("upload");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState("");
   const [imageAltText, setImageAltText] = useState("");
   const [imageVariantId, setImageVariantId] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -148,24 +151,35 @@ export default function EditProductPage() {
     }
   }
 
-  async function handleUploadImage(e: React.FormEvent) {
+  async function handleAddImage(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setMessage(null);
-    if (!imageFile) {
+
+    if (imageSource === "upload" && !imageFile) {
       setError("Selecciona un archivo.");
       return;
     }
+    if (imageSource === "link" && !imageUrl) {
+      setError("Pega el link de Cloudflare.");
+      return;
+    }
+
     setUploadingImage(true);
     try {
-      await adminUploadImage(slug, imageFile, imageAltText, product?.images.length ?? 0, imageVariantId || null);
+      if (imageSource === "upload") {
+        await adminUploadImage(slug, imageFile!, imageAltText, product?.images.length ?? 0, imageVariantId || null);
+      } else {
+        await adminLinkImage(slug, imageUrl, imageAltText, product?.images.length ?? 0, imageVariantId || null);
+      }
       setImageFile(null);
+      setImageUrl("");
       setImageAltText("");
       setImageVariantId("");
-      setMessage("Imagen subida.");
+      setMessage(imageSource === "upload" ? "Imagen subida." : "Imagen vinculada.");
       await reload();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Error al subir la imagen.");
+      setError(err instanceof ApiError ? err.message : "Error al agregar la imagen.");
     } finally {
       setUploadingImage(false);
     }
@@ -277,20 +291,55 @@ export default function EditProductPage() {
       )}
 
       <form
-        onSubmit={handleUploadImage}
+        onSubmit={handleAddImage}
         className="mt-4 flex flex-col gap-4 rounded-2xl border border-brava-pink-light p-6"
       >
-        <h3 className="font-medium text-brava-ink">Subir imagen</h3>
-        <div>
-          <label className="block text-sm font-medium text-brava-ink">Archivo (JPEG, PNG o WebP, máx. 5 MB)</label>
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            required
-            onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-            className="mt-1 w-full text-sm"
-          />
+        <h3 className="font-medium text-brava-ink">Agregar imagen</h3>
+        <div className="flex gap-4 text-sm">
+          <label className="flex items-center gap-1.5 text-brava-ink">
+            <input
+              type="radio"
+              name="imageSource"
+              checked={imageSource === "upload"}
+              onChange={() => setImageSource("upload")}
+            />
+            Subir archivo
+          </label>
+          <label className="flex items-center gap-1.5 text-brava-ink">
+            <input
+              type="radio"
+              name="imageSource"
+              checked={imageSource === "link"}
+              onChange={() => setImageSource("link")}
+            />
+            Link de Cloudflare
+          </label>
         </div>
+        {imageSource === "upload" ? (
+          <div>
+            <label className="block text-sm font-medium text-brava-ink">Archivo (JPEG, PNG o WebP, máx. 5 MB)</label>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+              className="mt-1 w-full text-sm"
+            />
+          </div>
+        ) : (
+          <div>
+            <label className="block text-sm font-medium text-brava-ink">URL de la imagen en Cloudflare</label>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://pub-....r2.dev/products/..."
+              className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
+            />
+            <p className="mt-1 text-xs text-brava-muted">
+              Debe ser un link del mismo bucket de R2 del proyecto — no cualquier URL externa.
+            </p>
+          </div>
+        )}
         <div>
           <label className="block text-sm font-medium text-brava-ink">Texto alternativo</label>
           <input
@@ -323,7 +372,7 @@ export default function EditProductPage() {
           disabled={uploadingImage}
           className="self-start rounded-full bg-brava-pink px-5 py-2.5 font-medium text-white transition-colors hover:bg-brava-pink-dark disabled:opacity-50"
         >
-          {uploadingImage ? "Subiendo…" : "Subir imagen"}
+          {uploadingImage ? "Guardando…" : imageSource === "upload" ? "Subir imagen" : "Vincular imagen"}
         </button>
       </form>
 
