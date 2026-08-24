@@ -61,8 +61,16 @@ export interface CategoryListItemDto {
   displayOrder: number;
 }
 
-export async function getProducts(): Promise<ProductListItemDto[]> {
-  const res = await fetch(`${API_URL}/api/products`, { next: { revalidate: 60 } });
+// ADR-0005: brand and category browsing. brand/category are slugs, matching
+// the API's own filter params — that's also what the filter bar's URL
+// (?brand=...&category=...) carries, so this is a direct passthrough.
+export async function getProducts(filters?: { brand?: string; category?: string }): Promise<ProductListItemDto[]> {
+  const params = new URLSearchParams();
+  if (filters?.brand) params.set("brand", filters.brand);
+  if (filters?.category) params.set("category", filters.category);
+  const query = params.toString();
+
+  const res = await fetch(`${API_URL}/api/products${query ? `?${query}` : ""}`, { next: { revalidate: 60 } });
   if (!res.ok) {
     throw new Error(`GET /api/products failed: ${res.status}`);
   }

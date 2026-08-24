@@ -1,5 +1,6 @@
-import { getProducts } from "@/lib/api";
+import { getProducts, getBrands, getCategories } from "@/lib/api";
 import { ProductCard } from "@/components/ProductCard";
+import { CatalogFilters } from "@/components/CatalogFilters";
 
 // Without this, `next build` tries to statically prerender this page —
 // fetching from the API from inside the build container, which isn't
@@ -8,8 +9,17 @@ import { ProductCard } from "@/components/ProductCard";
 // should be fresh on every request, not baked in at build time.
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
-  const products = await getProducts();
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ brand?: string; category?: string }>;
+}) {
+  const { brand, category } = await searchParams;
+  const [products, brands, categories] = await Promise.all([
+    getProducts({ brand, category }),
+    getBrands(),
+    getCategories(),
+  ]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
@@ -19,9 +29,11 @@ export default async function Home() {
         {products.length === 1 ? "" : "s"}
       </p>
 
+      <CatalogFilters brands={brands} categories={categories} />
+
       {products.length === 0 ? (
         <p className="mt-10 text-brava-muted">
-          No hay productos disponibles en este momento.
+          No hay productos disponibles con estos filtros.
         </p>
       ) : (
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
