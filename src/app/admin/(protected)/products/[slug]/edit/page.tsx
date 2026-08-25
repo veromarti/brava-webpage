@@ -360,7 +360,7 @@ export default function EditProductPage() {
             required
             value={imageAltText}
             onChange={(e) => setImageAltText(e.target.value)}
-            placeholder="Describe la imagen para accesibilidad y SEO"
+            placeholder="Describe la imagen"
             className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
           />
         </div>
@@ -394,7 +394,7 @@ export default function EditProductPage() {
       {product.variants.length === 0 ? (
         <p className="mt-2 text-sm text-brava-muted">
           Sin variantes todavía — el producto no aparecerá en el catálogo público hasta que tenga
-          al menos una variante activa con precio (ADR-0003).
+          al menos una variante activa con precio.
         </p>
       ) : (
         <table className="mt-4 w-full text-left text-sm">
@@ -504,7 +504,7 @@ export default function EditProductPage() {
             checked={variantForm.isActive}
             onChange={(e) => setVariantForm({ ...variantForm, isActive: e.target.checked })}
           />
-          Activa (requiere precio — ADR-0003)
+          Activa (requiere precio)
         </label>
         <button
           type="submit"
