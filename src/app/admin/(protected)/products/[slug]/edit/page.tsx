@@ -18,6 +18,7 @@ import {
 } from "@/lib/api-admin";
 import type { BrandListItemDto, CategoryListItemDto, ProductVariantDto, ImageDto } from "@/lib/api";
 import { BrandPicker } from "@/components/admin/BrandPicker";
+import { variantLabel } from "@/lib/format";
 
 interface ProductForEdit {
   id: string;
@@ -31,9 +32,16 @@ interface ProductForEdit {
   images: ImageDto[];
 }
 
+// Not every variant is a tone — Milagros Perfume Capilar is $8.000/30ml vs
+// $27.000/120ml, no tone involved at all. Units/volumeMl/massG cover size
+// variants; a variant can mix a tone with a size too (both sets of fields
+// are independent, not either/or).
 const emptyVariantForm = {
   toneCode: "",
   toneName: "",
+  units: "",
+  volumeMl: "",
+  massG: "",
   sellPrice: "",
   physicalStock: "0",
   availableOnDemand: false,
@@ -129,9 +137,9 @@ export default function EditProductPage() {
         sku: null,
         toneCode: variantForm.toneCode || null,
         toneName: variantForm.toneName || null,
-        units: null,
-        volumeMl: null,
-        massG: null,
+        units: variantForm.units ? Number(variantForm.units) : null,
+        volumeMl: variantForm.volumeMl ? Number(variantForm.volumeMl) : null,
+        massG: variantForm.massG ? Number(variantForm.massG) : null,
         costPrice: null,
         sellPrice: variantForm.sellPrice ? Number(variantForm.sellPrice) : null,
         physicalStock: Number(variantForm.physicalStock),
@@ -397,7 +405,7 @@ export default function EditProductPage() {
               <option value="">General del producto</option>
               {product.variants.map((v) => (
                 <option key={v.id} value={v.id}>
-                  {v.toneName ?? v.toneCode ?? v.id}
+                  {variantLabel(v)}
                 </option>
               ))}
             </select>
@@ -432,7 +440,7 @@ export default function EditProductPage() {
           <tbody>
             {product.variants.map((v) => (
               <tr key={v.id} className="border-b border-brava-pink-light/50">
-                <td className="py-2 text-brava-ink">{v.toneName ?? v.toneCode ?? "Único"}</td>
+                <td className="py-2 text-brava-ink">{variantLabel(v)}</td>
                 <td className="py-2 text-brava-muted">
                   {v.sellPrice !== null ? `$${v.sellPrice.toLocaleString("es-CO")}` : "—"}
                 </td>
@@ -494,6 +502,10 @@ export default function EditProductPage() {
         className="mt-6 flex flex-col gap-4 rounded-2xl border border-brava-pink-light p-6"
       >
         <h3 className="font-medium text-brava-ink">Agregar variante</h3>
+        <p className="-mt-2 text-xs text-brava-muted">
+          Todos estos campos son opcionales e independientes — un producto puede variar por tono,
+          por tamaño, por ambos, o por ninguno.
+        </p>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-brava-ink">Tono/código</label>
@@ -508,6 +520,40 @@ export default function EditProductPage() {
             <input
               value={variantForm.toneName}
               onChange={(e) => setVariantForm({ ...variantForm, toneName: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brava-ink">Unidades</label>
+            <input
+              type="number"
+              min={0}
+              value={variantForm.units}
+              onChange={(e) => setVariantForm({ ...variantForm, units: e.target.value })}
+              placeholder='p. ej. "180 unidades"'
+              className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brava-ink">Volumen (ml)</label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={variantForm.volumeMl}
+              onChange={(e) => setVariantForm({ ...variantForm, volumeMl: e.target.value })}
+              placeholder="p. ej. 30 o 120"
+              className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brava-ink">Peso/masa (g)</label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={variantForm.massG}
+              onChange={(e) => setVariantForm({ ...variantForm, massG: e.target.value })}
               className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
             />
           </div>
