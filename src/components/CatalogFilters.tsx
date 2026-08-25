@@ -59,6 +59,7 @@ export function CatalogFilters({
 
       {hasFilters && (
         <button
+          type="button"
           onClick={() => router.push("/")}
           className="text-sm text-brava-muted hover:text-brava-pink-dark"
         >

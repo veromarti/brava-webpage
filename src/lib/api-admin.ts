@@ -110,6 +110,17 @@ export async function adminDeactivateProduct(slug: string): Promise<void> {
   await authedFetch(`/api/products/${encodeURIComponent(slug)}`, { method: "DELETE" });
 }
 
+// Reuses the bulk-stock endpoint with a single item — it only ever touches
+// PhysicalStock, so unlike a full variant PUT there's no CostPrice to
+// accidentally null out (same reasoning as adminActivateVariant).
+export async function adminUpdateStock(variantId: string, physicalStock: number): Promise<void> {
+  await authedFetch("/api/products/variants/bulk-stock", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items: [{ variantId, physicalStock }] }),
+  });
+}
+
 export interface CreateVariantPayload {
   sku: string | null;
   toneCode: string | null;
@@ -223,5 +234,16 @@ export async function getCategoriesForAdmin(): Promise<CategoryListItemDto[]> {
 export async function getProductForAdmin(slug: string) {
   const res = await fetch(`${API_URL}/api/products/${encodeURIComponent(slug)}`);
   if (!res.ok) throw new ApiError("Producto no encontrado.", res.status);
+  return res.json();
+}
+
+// 409 on a duplicate name (case-insensitive) — the API's own dedup rule,
+// surfaced here as whatever message it sends back.
+export async function adminCreateBrand(name: string): Promise<BrandListItemDto> {
+  const res = await authedFetch("/api/brands", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
   return res.json();
 }

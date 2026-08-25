@@ -42,6 +42,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
             </Link>
           </nav>
           <button
+            type="button"
             onClick={() => {
               clearToken();
               router.push("/admin/login");

@@ -40,6 +40,7 @@ export function ProductImageCarousel({ images, productName }: { images: ImageDto
         {images.length > 1 && (
           <>
             <button
+              type="button"
               onClick={() => goTo(index - 1)}
               aria-label="Imagen anterior"
               className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-brava-pink-dark shadow hover:bg-white"
@@ -47,6 +48,7 @@ export function ProductImageCarousel({ images, productName }: { images: ImageDto
               ‹
             </button>
             <button
+              type="button"
               onClick={() => goTo(index + 1)}
               aria-label="Imagen siguiente"
               className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-brava-pink-dark shadow hover:bg-white"
@@ -61,6 +63,7 @@ export function ProductImageCarousel({ images, productName }: { images: ImageDto
         <div className="mt-3 flex justify-center gap-2">
           {images.map((img, i) => (
             <button
+              type="button"
               key={img.id}
               onClick={() => goTo(i)}
               aria-label={`Ver imagen ${i + 1}`}

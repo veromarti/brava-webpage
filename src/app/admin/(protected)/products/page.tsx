@@ -95,6 +95,7 @@ export default function AdminProductsPage() {
                   </Link>
                   {p.isActive && (
                     <button
+                      type="button"
                       onClick={() => handleDeactivate(p.slug)}
                       className="ml-4 text-brava-muted hover:text-red-600"
                     >

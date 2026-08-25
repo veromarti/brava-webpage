@@ -7,6 +7,7 @@ import {
   adminCreateVariant,
   adminActivateVariant,
   adminDeactivateVariant,
+  adminUpdateStock,
   adminUploadImage,
   adminLinkImage,
   adminDeleteImage,
@@ -16,6 +17,7 @@ import {
   ApiError,
 } from "@/lib/api-admin";
 import type { BrandListItemDto, CategoryListItemDto, ProductVariantDto, ImageDto } from "@/lib/api";
+import { BrandPicker } from "@/components/admin/BrandPicker";
 
 interface ProductForEdit {
   id: string;
@@ -52,6 +54,8 @@ export default function EditProductPage() {
   const [isActive, setIsActive] = useState(true);
 
   const [variantForm, setVariantForm] = useState(emptyVariantForm);
+  const [stockEdits, setStockEdits] = useState<Record<string, string>>({});
+  const [savingStockId, setSavingStockId] = useState<string | null>(null);
   const [imageSource, setImageSource] = useState<"upload" | "link">("upload");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState("");
@@ -165,6 +169,32 @@ export default function EditProductPage() {
     }
   }
 
+  async function handleSaveStock(variantId: string) {
+    const raw = stockEdits[variantId];
+    const value = Number(raw);
+    if (raw === undefined || !Number.isInteger(value) || value < 0) {
+      setError("El stock debe ser un número entero mayor o igual a 0.");
+      return;
+    }
+    setSavingStockId(variantId);
+    setError(null);
+    setMessage(null);
+    try {
+      await adminUpdateStock(variantId, value);
+      setStockEdits((prev) => {
+        const next = { ...prev };
+        delete next[variantId];
+        return next;
+      });
+      setMessage("Stock actualizado.");
+      await reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error al actualizar el stock.");
+    } finally {
+      setSavingStockId(null);
+    }
+  }
+
   async function handleAddImage(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -242,21 +272,12 @@ export default function EditProductPage() {
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-brava-ink">Marca</label>
-            <select
-              required
-              value={brandId}
-              onChange={(e) => setBrandId(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-brava-pink-light bg-white px-3 py-2 outline-none focus:border-brava-pink"
-            >
-              {brands.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <BrandPicker
+            brands={brands}
+            value={brandId}
+            onChange={setBrandId}
+            onBrandCreated={(brand) => setBrands((prev) => [...prev, brand])}
+          />
           <div>
             <label className="block text-sm font-medium text-brava-ink">Categoría</label>
             <select
@@ -294,6 +315,7 @@ export default function EditProductPage() {
               {/* eslint-disable-next-line @next/next/no-img-element -- admin-only thumbnail, not worth next/image's remotePatterns overhead here */}
               <img src={img.url} alt={img.altText} className="aspect-square w-full object-cover" />
               <button
+                type="button"
                 onClick={() => handleDeleteImage(img.id)}
                 className="absolute right-1 top-1 rounded-full bg-white/90 px-2 py-0.5 text-xs text-red-600 hover:bg-white"
               >
@@ -414,7 +436,27 @@ export default function EditProductPage() {
                 <td className="py-2 text-brava-muted">
                   {v.sellPrice !== null ? `$${v.sellPrice.toLocaleString("es-CO")}` : "—"}
                 </td>
-                <td className="py-2 text-brava-muted">{v.physicalStock}</td>
+                <td className="py-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      value={stockEdits[v.id] ?? String(v.physicalStock)}
+                      onChange={(e) => setStockEdits((prev) => ({ ...prev, [v.id]: e.target.value }))}
+                      className="w-20 rounded-lg border border-brava-pink-light px-2 py-1 text-brava-muted outline-none focus:border-brava-pink"
+                    />
+                    {stockEdits[v.id] !== undefined && stockEdits[v.id] !== String(v.physicalStock) && (
+                      <button
+                        type="button"
+                        onClick={() => handleSaveStock(v.id)}
+                        disabled={savingStockId === v.id}
+                        className="text-xs text-brava-pink-dark hover:underline disabled:opacity-50"
+                      >
+                        {savingStockId === v.id ? "…" : "Guardar"}
+                      </button>
+                    )}
+                  </div>
+                </td>
                 <td className="py-2">
                   {v.isActive ? (
                     <span className="text-emerald-700">Activa</span>
@@ -425,6 +467,7 @@ export default function EditProductPage() {
                 <td className="py-2">
                   {v.isActive ? (
                     <button
+                      type="button"
                       onClick={() => handleDeactivateVariant(v.id)}
                       className="text-brava-muted hover:text-red-600"
                     >
@@ -432,6 +475,7 @@ export default function EditProductPage() {
                     </button>
                   ) : (
                     <button
+                      type="button"
                       onClick={() => handleActivateVariant(v.id)}
                       className="text-brava-pink-dark hover:underline"
                     >

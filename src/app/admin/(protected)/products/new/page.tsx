@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminCreateProduct, getBrandsForAdmin, getCategoriesForAdmin, ApiError } from "@/lib/api-admin";
 import type { BrandListItemDto, CategoryListItemDto } from "@/lib/api";
+import { BrandPicker } from "@/components/admin/BrandPicker";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -60,24 +61,12 @@ export default function NewProductPage() {
             className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-brava-ink">Marca</label>
-          <select
-            required
-            value={brandId}
-            onChange={(e) => setBrandId(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-brava-pink-light bg-white px-3 py-2 outline-none focus:border-brava-pink"
-          >
-            <option value="" disabled>
-              Selecciona una marca
-            </option>
-            {brands.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <BrandPicker
+          brands={brands}
+          value={brandId}
+          onChange={setBrandId}
+          onBrandCreated={(brand) => setBrands((prev) => [...prev, brand])}
+        />
         <div>
           <label className="block text-sm font-medium text-brava-ink">Categoría</label>
           <select
