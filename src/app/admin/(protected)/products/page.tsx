@@ -1,12 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { adminGetProducts, adminDeactivateProduct, AdminProductListItemDto, ApiError } from "@/lib/api-admin";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProductListItemDto[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [brandFilter, setBrandFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+
+  // Local filtering, not a URL/backend round trip — the admin list is
+  // already fully loaded (including inactive products, unlike the public
+  // catalog), so there's no reason to re-fetch just to narrow the view.
+  const brandNames = useMemo(
+    () => [...new Set((products ?? []).map((p) => p.brandName))].sort(),
+    [products],
+  );
+  const categoryNames = useMemo(
+    () => [...new Set((products ?? []).map((p) => p.categoryName))].sort(),
+    [products],
+  );
+  const filteredProducts = (products ?? []).filter(
+    (p) => (!brandFilter || p.brandName === brandFilter) && (!categoryFilter || p.categoryName === categoryFilter),
+  );
 
   async function reload() {
     try {
@@ -55,6 +72,49 @@ export default function AdminProductsPage() {
       {!products ? (
         <p className="mt-6 text-brava-muted">Cargando…</p>
       ) : (
+        <>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <select
+              value={brandFilter}
+              onChange={(e) => setBrandFilter(e.target.value)}
+              className="rounded-lg border border-brava-pink-light bg-white px-3 py-2 text-sm outline-none focus:border-brava-pink"
+            >
+              <option value="">Todas las marcas</option>
+              {brandNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="rounded-lg border border-brava-pink-light bg-white px-3 py-2 text-sm outline-none focus:border-brava-pink"
+            >
+              <option value="">Todas las categorías</option>
+              {categoryNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            {(brandFilter || categoryFilter) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setBrandFilter("");
+                  setCategoryFilter("");
+                }}
+                className="text-sm text-brava-muted hover:text-brava-pink-dark"
+              >
+                Limpiar filtros
+              </button>
+            )}
+            <span className="text-sm text-brava-muted">
+              {filteredProducts.length} de {products.length}
+            </span>
+          </div>
+
         <table className="mt-6 w-full text-left text-sm">
           <thead>
             <tr className="border-b border-brava-pink-light text-brava-muted">
@@ -67,7 +127,7 @@ export default function AdminProductsPage() {
             </tr>
           </thead>
           <tbody>
-            {products.map((p) => (
+            {filteredProducts.map((p) => (
               <tr key={p.id} className="border-b border-brava-pink-light/50">
                 <td className="py-2 text-brava-ink">{p.name}</td>
                 <td className="py-2 text-brava-muted">{p.brandName}</td>
@@ -107,6 +167,7 @@ export default function AdminProductsPage() {
             ))}
           </tbody>
         </table>
+        </>
       )}
     </div>
   );

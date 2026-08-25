@@ -35,7 +35,7 @@ export default async function ProductDetailPage({
           <h1 className="mt-1 text-2xl font-bold text-brava-ink">{product.name}</h1>
           <p className="mt-3 text-brava-ink/80">{product.description}</p>
 
-          <ProductOrderForm productName={product.name} variants={activeVariants} />
+          <ProductOrderForm productSlug={product.slug} productName={product.name} variants={activeVariants} />
         </div>
       </div>
     </div>

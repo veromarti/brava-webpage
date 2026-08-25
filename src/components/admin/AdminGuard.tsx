@@ -40,6 +40,12 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
             <Link href="/admin/products/new" className="hover:text-brava-pink-dark">
               Nuevo producto
             </Link>
+            <Link href="/admin/combos" className="hover:text-brava-pink-dark">
+              Kits
+            </Link>
+            <Link href="/admin/combos/new" className="hover:text-brava-pink-dark">
+              Nuevo kit
+            </Link>
           </nav>
           <button
             type="button"

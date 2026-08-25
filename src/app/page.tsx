@@ -1,5 +1,6 @@
-import { getProducts, getBrands, getCategories } from "@/lib/api";
+import { getProducts, getBrands, getCategories, getCombos } from "@/lib/api";
 import { ProductCard } from "@/components/ProductCard";
+import { ComboCard } from "@/components/ComboCard";
 import { CatalogFilters } from "@/components/CatalogFilters";
 
 // Without this, `next build` tries to statically prerender this page —
@@ -15,28 +16,39 @@ export default async function Home({
   searchParams: Promise<{ brand?: string; category?: string }>;
 }) {
   const { brand, category } = await searchParams;
-  const [products, brands, categories] = await Promise.all([
+  const hasFilters = Boolean(brand || category);
+
+  // Combos span brands/categories by design (that's the point of a kit), so
+  // they only show on the unfiltered view — there's no coherent way to
+  // decide whether a combo "belongs" to one brand/category filter.
+  const [products, brands, categories, combos] = await Promise.all([
     getProducts({ brand, category }),
     getBrands(),
     getCategories(),
+    hasFilters ? Promise.resolve([]) : getCombos(),
   ]);
+
+  const totalCount = products.length + combos.length;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
       <h1 className="text-3xl font-bold text-brava-ink">Catálogo</h1>
       <p className="mt-1 text-brava-muted">
-        {products.length} producto{products.length === 1 ? "" : "s"} disponible
-        {products.length === 1 ? "" : "s"}
+        {totalCount} producto{totalCount === 1 ? "" : "s"} disponible
+        {totalCount === 1 ? "" : "s"}
       </p>
 
       <CatalogFilters brands={brands} categories={categories} />
 
-      {products.length === 0 ? (
+      {totalCount === 0 ? (
         <p className="mt-10 text-brava-muted">
           No hay productos disponibles con estos filtros.
         </p>
       ) : (
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {combos.map((combo) => (
+            <ComboCard key={`combo-${combo.slug}`} combo={combo} />
+          ))}
           {products.map((product) => (
             <ProductCard key={product.slug} product={product} />
           ))}

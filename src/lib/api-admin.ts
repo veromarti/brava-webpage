@@ -1,7 +1,7 @@
 "use client";
 
 import { getToken } from "@/lib/auth-client";
-import type { BrandListItemDto, CategoryListItemDto } from "@/lib/api";
+import type { BrandListItemDto, CategoryListItemDto, ComboItemDetailDto } from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5299";
 
@@ -246,4 +246,81 @@ export async function adminCreateBrand(name: string): Promise<BrandListItemDto> 
     body: JSON.stringify({ name }),
   });
   return res.json();
+}
+
+export interface AdminComboListItemDto {
+  id: string;
+  slug: string;
+  name: string;
+  isActive: boolean;
+  originalPrice: number;
+  manualPrice: number | null;
+  finalPrice: number;
+  itemCount: number;
+}
+
+export interface AdminComboDetailDto {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  originalPrice: number;
+  manualPrice: number | null;
+  finalPrice: number;
+  items: ComboItemDetailDto[];
+}
+
+export interface ComboDto {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  originalPrice: number;
+  manualPrice: number | null;
+  finalPrice: number;
+  items: ComboItemDetailDto[];
+}
+
+export interface ComboPayload {
+  name: string;
+  description: string;
+  variantIds: string[];
+  manualPrice: number | null;
+}
+
+export async function adminGetCombos(): Promise<AdminComboListItemDto[]> {
+  const res = await authedFetch("/api/combos/admin");
+  return res.json();
+}
+
+export async function adminGetCombo(slug: string): Promise<AdminComboDetailDto> {
+  const res = await authedFetch(`/api/combos/${encodeURIComponent(slug)}/admin`);
+  return res.json();
+}
+
+export async function adminCreateCombo(payload: ComboPayload): Promise<ComboDto> {
+  const res = await authedFetch("/api/combos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+export async function adminUpdateCombo(
+  slug: string,
+  payload: ComboPayload & { isActive: boolean },
+): Promise<ComboDto> {
+  const res = await authedFetch(`/api/combos/${encodeURIComponent(slug)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+export async function adminDeactivateCombo(slug: string): Promise<void> {
+  await authedFetch(`/api/combos/${encodeURIComponent(slug)}`, { method: "DELETE" });
 }

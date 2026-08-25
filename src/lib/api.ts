@@ -107,3 +107,58 @@ export async function getCategories(): Promise<CategoryListItemDto[]> {
   }
   return res.json();
 }
+
+export interface ComboListItemDto {
+  slug: string;
+  name: string;
+  originalPrice: number;
+  finalPrice: number;
+  imageUrl: string | null;
+}
+
+export interface ComboItemDetailDto {
+  variantId: string;
+  productSlug: string;
+  productName: string;
+  toneCode: string | null;
+  toneName: string | null;
+  units: number | null;
+  volumeMl: number | null;
+  massG: number | null;
+  sellPrice: number;
+}
+
+export interface ComboDetailDto {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  originalPrice: number;
+  finalPrice: number;
+  imageUrl: string | null;
+  items: ComboItemDetailDto[];
+}
+
+// Combos don't have brand/category filters — they span products by design,
+// so unlike getProducts this never takes filter params.
+export async function getCombos(): Promise<ComboListItemDto[]> {
+  const res = await fetch(`${API_URL}/api/combos`, { next: { revalidate: 60 } });
+  if (!res.ok) {
+    throw new Error(`GET /api/combos failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function getComboBySlug(slug: string): Promise<ComboDetailDto | null> {
+  const res = await fetch(`${API_URL}/api/combos/${encodeURIComponent(slug)}`, {
+    next: { revalidate: 60 },
+  });
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`GET /api/combos/${slug} failed: ${res.status}`);
+  }
+  return res.json();
+}

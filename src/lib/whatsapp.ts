@@ -12,3 +12,21 @@ export function buildWhatsAppOrderLink(params: {
   const message = `Hola BRAVA, quiero pedir: ${params.productName} (${params.variantLabel}). Cantidad: ${params.quantity}.`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
+
+export function buildWhatsAppComboOrderLink(params: { comboName: string; quantity: number }): string {
+  const message = `Hola BRAVA, quiero pedir el kit: ${params.comboName}. Cantidad: ${params.quantity}.`;
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
+// Wishlist ("Lista de deseos") checkout — one line per item, a total at the
+// end. This is deliberately the same wa.me deep-link pattern as the other
+// two builders, just multi-line: there's no cart/checkout backend (out of
+// scope per ADR-0005), so the "summary" is entirely this preset message.
+export function buildWhatsAppWishlistLink(params: {
+  lines: string[];
+  totalLabel: string;
+}): string {
+  const numbered = params.lines.map((line, i) => `${i + 1}. ${line}`).join("\n");
+  const message = `Hola BRAVA, quiero pedir:\n${numbered}\n\nTotal estimado: ${params.totalLabel}`;
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
