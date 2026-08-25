@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import { getProductBySlug } from "@/lib/api";
 import { formatCop, variantLabel, stockStatus } from "@/lib/format";
 import { buildWhatsAppOrderLink } from "@/lib/whatsapp";
+import { ProductImageCarousel } from "@/components/ProductImageCarousel";
 
 // See the same directive on the home page (src/app/page.tsx) for why.
 export const dynamic = "force-dynamic";
@@ -23,24 +23,11 @@ export default async function ProductDetailPage({
   }
 
   const activeVariants = product.variants.filter((v) => v.isActive && v.sellPrice !== null);
-  const primaryImage = product.images[0];
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
       <div className="grid gap-8 sm:grid-cols-2">
-        <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-brava-pink-light">
-          {primaryImage ? (
-            <Image
-              src={primaryImage.url}
-              alt={primaryImage.altText}
-              width={600}
-              height={600}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="text-brava-pink">{product.name}</span>
-          )}
-        </div>
+        <ProductImageCarousel images={product.images} productName={product.name} />
 
         <div>
           <p className="text-xs uppercase tracking-wide text-brava-muted">
