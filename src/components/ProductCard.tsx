@@ -9,7 +9,7 @@ export function ProductCard({ product }: { product: ProductListItemDto }) {
       href={`/products/${product.slug}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-brava-pink-light bg-white transition-shadow hover:shadow-lg hover:shadow-brava-pink-light"
     >
-      <div className="flex aspect-square items-center justify-center overflow-hidden bg-brava-pink-light text-brava-pink">
+      <div className="flex aspect-square items-center justify-center overflow-hidden bg-brava-pink-light text-brava-ink">
         {product.imageUrl ? (
           <Image
             src={product.imageUrl}

@@ -13,6 +13,12 @@ export function buildWhatsAppOrderLink(params: {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
+// General contact link — footer/social icon, no product/order context yet.
+export function buildWhatsAppContactLink(): string {
+  const message = "Hola BRAVA, quiero saber más sobre sus productos.";
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
 export function buildWhatsAppComboOrderLink(params: { comboName: string; quantity: number }): string {
   const message = `Hola BRAVA, quiero pedir el kit: ${params.comboName}. Cantidad: ${params.quantity}.`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;

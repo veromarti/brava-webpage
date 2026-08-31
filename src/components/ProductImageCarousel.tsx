@@ -15,7 +15,7 @@ export function ProductImageCarousel({ images, productName }: { images: ImageDto
   if (images.length === 0) {
     return (
       <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-brava-pink-light">
-        <span className="text-brava-pink">{productName}</span>
+        <span className="text-brava-ink">{productName}</span>
       </div>
     );
   }

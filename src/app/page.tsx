@@ -32,7 +32,7 @@ export default async function Home({
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="text-3xl font-bold text-brava-ink">Catálogo</h1>
+      <h1 className="font-display text-3xl text-brava-ink">Catálogo</h1>
       <p className="mt-1 text-brava-muted">
         {totalCount} producto{totalCount === 1 ? "" : "s"} disponible
         {totalCount === 1 ? "" : "s"}

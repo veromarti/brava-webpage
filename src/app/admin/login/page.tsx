@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { login, ApiError } from "@/lib/api-admin";
 import { saveToken, isLoggedIn } from "@/lib/auth-client";
@@ -35,7 +36,17 @@ export default function AdminLoginPage() {
 
   return (
     <div className="mx-auto flex max-w-sm flex-col px-6 py-20">
-      <h1 className="text-2xl font-bold text-brava-ink">Acceso administradores</h1>
+      {/* Lockup expresivo (brandbook p.9): reserved for campaign-style,
+          emotionally-charged pieces — a standalone login screen counts
+          as a "portada", unlike the persistent nav header. */}
+      <Image
+        src="/logo-brava-lockup.png"
+        alt="Atrévete a ser BRAVA"
+        width={1698}
+        height={906}
+        className="mx-auto h-28 w-auto"
+      />
+      <h1 className="mt-6 text-center text-2xl font-bold text-brava-ink">Acceso administradores</h1>
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
         <div>
           <label className="block text-sm font-medium text-brava-ink">Correo</label>

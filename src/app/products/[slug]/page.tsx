@@ -32,7 +32,7 @@ export default async function ProductDetailPage({
           <p className="text-xs uppercase tracking-wide text-brava-muted">
             {product.brandName} · {product.categoryName}
           </p>
-          <h1 className="mt-1 text-2xl font-bold text-brava-ink">{product.name}</h1>
+          <h1 className="mt-1 font-display text-2xl text-brava-ink">{product.name}</h1>
           <p className="mt-3 text-brava-ink/80">{product.description}</p>
 
           <ProductOrderForm productSlug={product.slug} productName={product.name} variants={activeVariants} />

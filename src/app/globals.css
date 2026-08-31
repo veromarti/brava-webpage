@@ -1,21 +1,47 @@
 @import "tailwindcss";
 
+/* Palette from BRAVA_Brandbook_v1.0 ("Paleta de color", p.11): a
+   monochromatic pink system. Names match the brandbook's own labels
+   (Rosa BRAVA / vivo / suave / nube / Tinta) so this file can be checked
+   against the PDF directly. Suggested proportion from the same page —
+   60% rosa nube / 20% white / 10% rosa suave / 7% rosa BRAVA / 3% tinta —
+   is why the page background (not just accents) is rosa nube below. */
 :root {
-  --brava-pink: #d6336c;
-  --brava-pink-dark: #a61e4d;
-  --brava-pink-light: #fff0f6;
-  --brava-ink: #2b2230;
-  --brava-bg: #fffbfc;
-  --brava-muted: #8a7a85;
+  --brava-pink: #f2366b; /* Rosa BRAVA — CTA, títulos, líneas y énfasis */
+  --brava-pink-vivid: #f570a0; /* Rosa vivo — acentos, detalles y recursos gráficos */
+  --brava-pink-light: #f1b7ca; /* Rosa suave — bloques secundarios y fondos */
+  --brava-cloud: #fde0e7; /* Rosa nube — fondo principal y respiración */
+  --brava-ink: #2c2c2c; /* Tinta — texto y contraste */
+
+  /* Not in the brandbook's table — derived so hover/active states on
+     Rosa BRAVA stay in-family instead of introducing an off-palette pink.
+     ~6:1 against white, comfortably clears the brandbook's own note that
+     Rosa BRAVA alone (3.81:1) is for large text/icons only. */
+  --brava-pink-dark: color-mix(in srgb, var(--brava-pink) 75%, black);
+  /* A muted rose-neutral for secondary text. The brandbook's accessibility
+     section (p.18) says small text should sit in Tinta, not a pastel —
+     this keeps the brand's warmth while staying dark enough (~6:1 on
+     white, ~5:1 on rosa nube) for captions and prices to read at 14px. */
+  --brava-muted: #6b5760;
+
+  --brava-bg: var(--brava-cloud);
 }
 
 @theme inline {
   --color-brava-pink: var(--brava-pink);
+  --color-brava-pink-vivid: var(--brava-pink-vivid);
   --color-brava-pink-dark: var(--brava-pink-dark);
   --color-brava-pink-light: var(--brava-pink-light);
+  --color-brava-cloud: var(--brava-cloud);
   --color-brava-ink: var(--brava-ink);
   --color-brava-bg: var(--brava-bg);
   --color-brava-muted: var(--brava-muted);
+
+  /* Sistema tipográfico (p.12): DM Sans for functional text, Poetsen One
+     for display/product titles. The gestural role is covered by the real
+     logo art (public/logo-brava-lockup.png), not a font. */
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-poetsen-one);
 }
 
 /* Brand palette is fixed regardless of OS theme — a pink-forward makeup

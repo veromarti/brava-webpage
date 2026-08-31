@@ -11,7 +11,7 @@ export function ComboCard({ combo }: { combo: ComboListItemDto }) {
       href={`/combos/${combo.slug}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-brava-pink-light bg-white transition-shadow hover:shadow-lg hover:shadow-brava-pink-light"
     >
-      <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-brava-pink-light text-brava-pink">
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-brava-pink-light text-brava-ink">
         <span className="absolute left-2 top-2 rounded-full bg-brava-pink px-2 py-0.5 text-xs font-medium text-white">
           Kit
         </span>

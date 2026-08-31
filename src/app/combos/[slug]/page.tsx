@@ -37,13 +37,13 @@ export default async function ComboDetailPage({
               className="h-full w-full object-cover"
             />
           ) : (
-            <span className="text-brava-pink">{combo.name}</span>
+            <span className="text-brava-ink">{combo.name}</span>
           )}
         </div>
 
         <div>
           <p className="text-xs uppercase tracking-wide text-brava-muted">Kit</p>
-          <h1 className="mt-1 text-2xl font-bold text-brava-ink">{combo.name}</h1>
+          <h1 className="mt-1 font-display text-2xl text-brava-ink">{combo.name}</h1>
           <p className="mt-3 text-brava-ink/80">{combo.description}</p>
 
           <div className="mt-4 flex items-baseline gap-3">

@@ -11,7 +11,7 @@ export default function WishlistPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
-      <h1 className="text-3xl font-bold text-brava-ink">Lista de deseos</h1>
+      <h1 className="font-display text-3xl text-brava-ink">Lista de deseos</h1>
       <p className="mt-1 text-brava-muted">
         Guarda lo que te gusta y pide todo junto por WhatsApp cuando estés lista.
       </p>
