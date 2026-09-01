@@ -1,7 +1,13 @@
 // Server-only: every call here runs in a Server Component, never the
 // browser (ADR-0005: server-rendered pages). That's also why this is
 // API_URL, not NEXT_PUBLIC_API_URL — it's never shipped to the client.
-const API_URL = process.env.API_URL ?? "http://localhost:5299";
+const API_URL = process.env.API_URL;
+
+if (!API_URL) {
+  throw new Error("API_URL no está definida en .env.local");
+}
+
+
 
 export interface ProductListItemDto {
   slug: string;
