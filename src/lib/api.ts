@@ -4,7 +4,7 @@
 const API_URL = process.env.API_URL;
 
 if (!API_URL) {
-  throw new Error("API_URL no está definida en .env.local");
+  throw new Error("API_URL no está definida");
 }
 
 
