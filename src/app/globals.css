@@ -57,43 +57,10 @@ body {
   color: var(--brava-ink);
 }
 
-/* Native <select> styling. These rules are deliberately unlayered so they
-   override Tailwind's utility classes on the existing selects (padding,
-   background) without having to touch all 11 call sites — border and radius
-   are left to each select's own utilities. Drops the OS arrow/blue chrome
-   for a brand chevron and a Rosa BRAVA focus ring. */
+/* Dropdowns use the custom <Select> component (src/components/Select.tsx),
+   not native <select> — a native select's open option list is OS-drawn and
+   can't be themed. Any native <select> that slips in still gets a usable
+   baseline here. */
 select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-color: #fff;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%236b5760' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  padding-right: 2.25rem;
-  color: var(--brava-ink);
-  cursor: pointer;
-}
-
-select:focus,
-select:focus-visible {
-  outline: none;
-  border-color: var(--brava-pink);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brava-pink) 25%, transparent);
-}
-
-select:disabled {
-  cursor: not-allowed;
-}
-
-/* Honoured by Firefox and Chromium where supported — a best-effort brand
-   colour for the open option list; the rest of that menu stays OS-drawn. */
-select option {
-  background-color: #fff;
-  color: var(--brava-ink);
-}
-
-select option:checked {
-  background-color: var(--brava-pink-light);
-  color: var(--brava-ink);
+  accent-color: var(--brava-pink);
 }

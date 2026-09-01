@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { adminGetProducts, getProductForAdmin, type AdminProductListItemDto } from "@/lib/api-admin";
 import type { ProductVariantDto } from "@/lib/api";
 import { variantLabel, formatCop } from "@/lib/format";
+import { Select } from "@/components/Select";
 
 export interface ComboItemRow {
   variantId: string;
@@ -98,35 +99,32 @@ export function ComboItemsEditor({
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <label className="block text-sm font-medium text-brava-ink">Producto</label>
-          <select
+          <Select
+            ariaLabel="Producto"
+            placeholder="Selecciona un producto"
             value={selectedProductSlug}
-            onChange={(e) => handleProductChange(e.target.value)}
-            className="mt-1 rounded-lg border border-brava-pink-light bg-white px-3 py-2 text-sm outline-none focus:border-brava-pink"
-          >
-            <option value="">Selecciona un producto</option>
-            {products.map((p) => (
-              <option key={p.slug} value={p.slug}>
-                {p.name} ({p.brandName})
-              </option>
-            ))}
-          </select>
+            onValueChange={handleProductChange}
+            wrapperClassName="mt-1 inline-block"
+            className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm"
+            options={products.map((p) => ({ value: p.slug, label: `${p.name} (${p.brandName})` }))}
+          />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-brava-ink">Variante</label>
-          <select
+          <Select
+            ariaLabel="Variante"
+            placeholder="Selecciona una variante"
             value={selectedVariantId}
-            onChange={(e) => setSelectedVariantId(e.target.value)}
+            onValueChange={setSelectedVariantId}
             disabled={productVariants.length === 0}
-            className="mt-1 rounded-lg border border-brava-pink-light bg-white px-3 py-2 text-sm outline-none focus:border-brava-pink disabled:opacity-50"
-          >
-            <option value="">Selecciona una variante</option>
-            {productVariants.map((v) => (
-              <option key={v.id} value={v.id}>
-                {variantLabel(v)} — {formatCop(v.sellPrice!)}
-              </option>
-            ))}
-          </select>
+            wrapperClassName="mt-1 inline-block"
+            className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm"
+            options={productVariants.map((v) => ({
+              value: v.id,
+              label: `${variantLabel(v)} — ${formatCop(v.sellPrice!)}`,
+            }))}
+          />
         </div>
 
         <button

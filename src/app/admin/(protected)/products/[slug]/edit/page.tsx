@@ -18,6 +18,7 @@ import {
 } from "@/lib/api-admin";
 import type { BrandListItemDto, CategoryListItemDto, ProductVariantDto, ImageDto } from "@/lib/api";
 import { BrandPicker } from "@/components/admin/BrandPicker";
+import { Select } from "@/components/Select";
 import { variantLabel } from "@/lib/format";
 
 interface ProductForEdit {
@@ -291,18 +292,16 @@ export default function EditProductPage() {
           />
           <div>
             <label className="block text-sm font-medium text-brava-ink">Categoría</label>
-            <select
+            <Select
               required
+              ariaLabel="Categoría"
+              placeholder="Selecciona una categoría"
               value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-brava-pink-light bg-white px-3 py-2 outline-none focus:border-brava-pink"
-            >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              onValueChange={setCategoryId}
+              wrapperClassName="mt-1 block w-full"
+              className="rounded-lg border border-brava-pink-light px-3 py-2"
+              options={categories.map((c) => ({ value: c.id, label: c.name }))}
+            />
           </div>
         </div>
         <label className="flex items-center gap-2 text-sm text-brava-ink">
@@ -400,18 +399,17 @@ export default function EditProductPage() {
         {product.variants.length > 0 && (
           <div>
             <label className="block text-sm font-medium text-brava-ink">Variante (opcional)</label>
-            <select
+            <Select
+              ariaLabel="Variante de la imagen"
               value={imageVariantId}
-              onChange={(e) => setImageVariantId(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-brava-pink-light bg-white px-3 py-2 outline-none focus:border-brava-pink"
-            >
-              <option value="">General del producto</option>
-              {product.variants.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {variantLabel(v)}
-                </option>
-              ))}
-            </select>
+              onValueChange={setImageVariantId}
+              wrapperClassName="mt-1 block w-full"
+              className="rounded-lg border border-brava-pink-light px-3 py-2"
+              options={[
+                { value: "", label: "General del producto" },
+                ...product.variants.map((v) => ({ value: v.id, label: variantLabel(v) })),
+              ]}
+            />
           </div>
         )}
         <button

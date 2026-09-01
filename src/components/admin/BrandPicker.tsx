@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { adminCreateBrand, ApiError } from "@/lib/api-admin";
 import type { BrandListItemDto } from "@/lib/api";
+import { Select } from "@/components/Select";
 
 // Shared by the create and edit product forms — a brand select plus an
 // inline "create a new one" toggle, so adding a brand that isn't in the
@@ -47,21 +48,16 @@ export function BrandPicker({
       <label className="block text-sm font-medium text-brava-ink">Marca</label>
       {!creating ? (
         <div className="mt-1 flex items-center gap-3">
-          <select
+          <Select
             required
+            ariaLabel="Marca"
+            placeholder="Selecciona una marca"
             value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-full rounded-lg border border-brava-pink-light bg-white px-3 py-2 outline-none focus:border-brava-pink"
-          >
-            <option value="" disabled>
-              Selecciona una marca
-            </option>
-            {brands.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
+            onValueChange={onChange}
+            wrapperClassName="flex-1"
+            className="rounded-lg border border-brava-pink-light px-3 py-2"
+            options={brands.map((b) => ({ value: b.id, label: b.name }))}
+          />
           <button
             type="button"
             onClick={() => setCreating(true)}

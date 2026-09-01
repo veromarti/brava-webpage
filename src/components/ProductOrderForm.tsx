@@ -5,6 +5,7 @@ import type { ProductVariantDto } from "@/lib/api";
 import { formatCop, variantLabel, stockStatus } from "@/lib/format";
 import { buildWhatsAppOrderLink } from "@/lib/whatsapp";
 import { useWishlist } from "@/components/WishlistProvider";
+import { Select } from "@/components/Select";
 
 // One variant picker + one quantity field + one WhatsApp button, instead of
 // a "Pedir por WhatsApp" repeated on every variant row — the customer picks
@@ -43,20 +44,16 @@ export function ProductOrderForm({
       {variants.length > 1 && (
         <div>
           <label className="block text-sm font-medium text-brava-ink">Tono/talla</label>
-          <select
+          <Select
+            ariaLabel="Tono o talla"
             value={selected.id}
-            onChange={(e) => {
-              setVariantId(e.target.value);
+            onValueChange={(v) => {
+              setVariantId(v);
               setAdded(false);
             }}
-            className="mt-1 w-full rounded-lg border border-brava-pink-light bg-white px-3 py-2 outline-none focus:border-brava-pink"
-          >
-            {variants.map((v) => (
-              <option key={v.id} value={v.id}>
-                {variantLabel(v)}
-              </option>
-            ))}
-          </select>
+            className="mt-1 rounded-lg border border-brava-pink-light px-3 py-2"
+            options={variants.map((v) => ({ value: v.id, label: variantLabel(v) }))}
+          />
         </div>
       )}
 

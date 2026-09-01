@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { adminCreateProduct, getBrandsForAdmin, getCategoriesForAdmin, ApiError } from "@/lib/api-admin";
 import type { BrandListItemDto, CategoryListItemDto } from "@/lib/api";
 import { BrandPicker } from "@/components/admin/BrandPicker";
+import { Select } from "@/components/Select";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -72,21 +73,16 @@ export default function NewProductPage() {
         />
         <div>
           <label className="block text-sm font-medium text-brava-ink">Categoría</label>
-          <select
+          <Select
             required
+            ariaLabel="Categoría"
+            placeholder="Selecciona una categoría"
             value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-brava-pink-light bg-white px-3 py-2 outline-none focus:border-brava-pink"
-          >
-            <option value="" disabled>
-              Selecciona una categoría
-            </option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            onValueChange={setCategoryId}
+            wrapperClassName="mt-1 block w-full"
+            className="rounded-lg border border-brava-pink-light px-3 py-2"
+            options={categories.map((c) => ({ value: c.id, label: c.name }))}
+          />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button

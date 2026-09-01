@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { adminGetProducts, adminDeactivateProduct, AdminProductListItemDto, ApiError } from "@/lib/api-admin";
+import { Select } from "@/components/Select";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProductListItemDto[] | null>(null);
@@ -74,30 +75,28 @@ export default function AdminProductsPage() {
       ) : (
         <>
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <select
+            <Select
+              ariaLabel="Filtrar por marca"
               value={brandFilter}
-              onChange={(e) => setBrandFilter(e.target.value)}
-              className="rounded-lg border border-brava-pink-light bg-white px-3 py-2 text-sm outline-none focus:border-brava-pink"
-            >
-              <option value="">Todas las marcas</option>
-              {brandNames.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-            <select
+              onValueChange={setBrandFilter}
+              wrapperClassName="inline-block"
+              className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm"
+              options={[
+                { value: "", label: "Todas las marcas" },
+                ...brandNames.map((name) => ({ value: name, label: name })),
+              ]}
+            />
+            <Select
+              ariaLabel="Filtrar por categoría"
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="rounded-lg border border-brava-pink-light bg-white px-3 py-2 text-sm outline-none focus:border-brava-pink"
-            >
-              <option value="">Todas las categorías</option>
-              {categoryNames.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
+              onValueChange={setCategoryFilter}
+              wrapperClassName="inline-block"
+              className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm"
+              options={[
+                { value: "", label: "Todas las categorías" },
+                ...categoryNames.map((name) => ({ value: name, label: name })),
+              ]}
+            />
             {(brandFilter || categoryFilter) && (
               <button
                 type="button"

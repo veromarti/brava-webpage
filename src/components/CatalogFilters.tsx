@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import type { BrandListItemDto, CategoryListItemDto } from "@/lib/api";
+import { Select } from "@/components/Select";
 
 // URL-driven (not local state) so a filtered view is a real, shareable,
 // bookmarkable link — matches ADR-0005's server-rendered-pages intent.
@@ -63,18 +64,17 @@ export function CatalogFilters({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <select
+        <Select
+          ariaLabel="Filtrar por marca"
           value={currentBrand}
-          onChange={(e) => updateFilter("brand", e.target.value)}
-          className="rounded-full border border-brava-pink-light bg-white px-4 py-2 text-sm outline-none focus:border-brava-pink"
-        >
-          <option value="">Todas las marcas</option>
-          {brands.map((b) => (
-            <option key={b.slug} value={b.slug}>
-              {b.name}
-            </option>
-          ))}
-        </select>
+          onValueChange={(v) => updateFilter("brand", v)}
+          wrapperClassName="inline-block"
+          className="rounded-full border border-brava-pink-light px-4 py-2 text-sm"
+          options={[
+            { value: "", label: "Todas las marcas" },
+            ...brands.map((b) => ({ value: b.slug, label: b.name })),
+          ]}
+        />
 
         {hasFilters && (
           <button

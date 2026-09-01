@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { ProductListItemDto, ComboListItemWithImagesDto } from "@/lib/api";
 import { ProductCard } from "@/components/ProductCard";
 import { ComboCard } from "@/components/ComboCard";
+import { Select } from "@/components/Select";
 
 type SortKey = "suggested" | "price-asc" | "price-desc" | "name";
 
@@ -57,16 +58,19 @@ export function CatalogGrid({
           placeholder="Buscar por nombre o marca…"
           className="w-full rounded-full border border-brava-pink-light bg-white px-4 py-2.5 text-sm outline-none focus:border-brava-pink sm:max-w-xs"
         />
-        <select
+        <Select
+          ariaLabel="Ordenar resultados"
           value={sort}
-          onChange={(e) => setSort(e.target.value as SortKey)}
-          className="rounded-full border border-brava-pink-light bg-white px-4 py-2.5 text-sm outline-none focus:border-brava-pink"
-        >
-          <option value="suggested">Orden sugerido</option>
-          <option value="price-asc">Precio: menor a mayor</option>
-          <option value="price-desc">Precio: mayor a menor</option>
-          <option value="name">Nombre (A–Z)</option>
-        </select>
+          onValueChange={(v) => setSort(v as SortKey)}
+          wrapperClassName="inline-block"
+          className="rounded-full border border-brava-pink-light px-4 py-2.5 text-sm"
+          options={[
+            { value: "suggested", label: "Orden sugerido" },
+            { value: "price-asc", label: "Precio: menor a mayor" },
+            { value: "price-desc", label: "Precio: mayor a menor" },
+            { value: "name", label: "Nombre (A–Z)" },
+          ]}
+        />
       </div>
 
       <p className="mt-4 text-sm text-brava-muted">
