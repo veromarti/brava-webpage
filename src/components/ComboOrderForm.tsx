@@ -8,10 +8,12 @@ export function ComboOrderForm({
   comboSlug,
   comboName,
   finalPrice,
+  imageUrl,
 }: {
   comboSlug: string;
   comboName: string;
   finalPrice: number;
+  imageUrl: string | null;
 }) {
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useWishlist();
@@ -49,6 +51,7 @@ export function ComboOrderForm({
                 slug: comboSlug,
                 name: comboName,
                 variantLabel: null,
+                imageUrl,
                 unitPrice: finalPrice,
               },
               quantity,

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getProductBySlug } from "@/lib/api";
+import { getProductBySlug, mainImageUrl } from "@/lib/api";
 import { ProductImageCarousel } from "@/components/ProductImageCarousel";
 import { ProductOrderForm } from "@/components/ProductOrderForm";
 
@@ -33,9 +33,14 @@ export default async function ProductDetailPage({
             {product.brandName} · {product.categoryName}
           </p>
           <h1 className="mt-1 font-display text-2xl text-brava-ink">{product.name}</h1>
-          <p className="mt-3 text-brava-ink/80">{product.description}</p>
+          <p className="mt-3 whitespace-pre-line text-brava-ink/80">{product.description}</p>
 
-          <ProductOrderForm productSlug={product.slug} productName={product.name} variants={activeVariants} />
+          <ProductOrderForm
+            productSlug={product.slug}
+            productName={product.name}
+            imageUrl={mainImageUrl(product)}
+            variants={activeVariants}
+          />
         </div>
       </div>
     </div>

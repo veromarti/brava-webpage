@@ -1,7 +1,6 @@
-import { getProducts, getBrands, getCategories, getCombos } from "@/lib/api";
-import { ProductCard } from "@/components/ProductCard";
-import { ComboCard } from "@/components/ComboCard";
+import { getProducts, getBrands, getCategories, getCombosWithImages } from "@/lib/api";
 import { CatalogFilters } from "@/components/CatalogFilters";
+import { CatalogGrid } from "@/components/CatalogGrid";
 
 // Without this, `next build` tries to statically prerender this page —
 // fetching from the API from inside the build container, which isn't
@@ -25,7 +24,7 @@ export default async function Home({
     getProducts({ brand, category }),
     getBrands(),
     getCategories(),
-    hasFilters ? Promise.resolve([]) : getCombos(),
+    hasFilters ? Promise.resolve([]) : getCombosWithImages(),
   ]);
 
   const totalCount = products.length + combos.length;
@@ -33,10 +32,7 @@ export default async function Home({
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
       <h1 className="font-display text-3xl text-brava-ink">Catálogo</h1>
-      <p className="mt-1 text-brava-muted">
-        {totalCount} producto{totalCount === 1 ? "" : "s"} disponible
-        {totalCount === 1 ? "" : "s"}
-      </p>
+      <p className="mt-1 text-brava-muted">Maquillaje y skincare · pedidos por WhatsApp</p>
 
       <CatalogFilters brands={brands} categories={categories} />
 
@@ -45,14 +41,7 @@ export default async function Home({
           No hay productos disponibles con estos filtros.
         </p>
       ) : (
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {combos.map((combo) => (
-            <ComboCard key={`combo-${combo.slug}`} combo={combo} />
-          ))}
-          {products.map((product) => (
-            <ProductCard key={product.slug} product={product} />
-          ))}
-        </div>
+        <CatalogGrid products={products} combos={combos} />
       )}
     </div>
   );

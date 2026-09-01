@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useWishlist } from "@/components/WishlistProvider";
 import { formatCop } from "@/lib/format";
@@ -29,9 +30,27 @@ export default function WishlistPage() {
             {items.map((item) => (
               <li
                 key={item.key}
-                className="flex items-center justify-between gap-4 rounded-xl border border-brava-pink-light p-4"
+                className="flex items-center gap-4 rounded-xl border border-brava-pink-light p-4"
               >
-                <div>
+                <Link
+                  href={item.type === "product" ? `/products/${item.slug}` : `/combos/${item.slug}`}
+                  className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-brava-pink-light"
+                >
+                  {item.imageUrl ? (
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.name}
+                      width={64}
+                      height={64}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="px-1 text-center text-[10px] leading-tight text-brava-ink">
+                      {item.name}
+                    </span>
+                  )}
+                </Link>
+                <div className="min-w-0 flex-1">
                   <Link
                     href={item.type === "product" ? `/products/${item.slug}` : `/combos/${item.slug}`}
                     className="font-medium text-brava-ink hover:text-brava-pink-dark"

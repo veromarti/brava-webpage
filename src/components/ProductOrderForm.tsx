@@ -12,10 +12,12 @@ import { useWishlist } from "@/components/WishlistProvider";
 export function ProductOrderForm({
   productSlug,
   productName,
+  imageUrl,
   variants,
 }: {
   productSlug: string;
   productName: string;
+  imageUrl: string | null;
   variants: ProductVariantDto[];
 }) {
   const [variantId, setVariantId] = useState(variants[0]?.id);
@@ -106,6 +108,7 @@ export function ProductOrderForm({
                 slug: productSlug,
                 name: productName,
                 variantLabel: variantLabel(selected),
+                imageUrl,
                 unitPrice: selected.sellPrice!,
               },
               quantity,

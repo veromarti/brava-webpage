@@ -168,3 +168,69 @@ export async function getComboBySlug(slug: string): Promise<ComboDetailDto | nul
   }
   return res.json();
 }
+
+// A product's "main" image is the lowest DisplayOrder one — same ordering
+// ProductImageCarousel shows first. Returns null when the product has no
+// images (or the product itself couldn't be loaded).
+export function mainImageUrl(product: ProductDetailDto | null): string | null {
+  if (!product || product.images.length === 0) {
+    return null;
+  }
+  return [...product.images].sort((a, b) => a.displayOrder - b.displayOrder)[0].url;
+}
+
+export interface ComboListItemWithImagesDto extends ComboListItemDto {
+  // Main image of each product in the kit, in item order, deduped by product.
+  productImageUrls: string[];
+}
+
+// The /api/combos list only carries the kit's own imageUrl, and kits rarely
+// get a dedicated photo. This enriches each kit with the main image of every
+// product it contains so the catalog card can build a collage. Every fetch
+// below is one of the same revalidate:60 cached GETs used elsewhere, so
+// products shared across kits are deduped by Next's fetch cache.
+export async function getCombosWithImages(): Promise<ComboListItemWithImagesDto[]> {
+  const combos = await getCombos();
+  return Promise.all(
+    combos.map(async (combo) => {
+      const detail = await getComboBySlug(combo.slug);
+      const slugs = detail ? [...new Set(detail.items.map((i) => i.productSlug))] : [];
+      const products = await Promise.all(slugs.map((slug) => getProductBySlug(slug)));
+      return {
+        ...combo,
+        productImageUrls: products.map(mainImageUrl).filter((url): url is string => url !== null),
+      };
+    }),
+  );
+}
+
+export interface ComboDetailWithImagesDto extends ComboDetailDto {
+  // Kit's own photo (if any) first, then each product's main image — feeds
+  // the detail-page carousel.
+  galleryImages: { url: string; altText: string }[];
+}
+
+export async function getComboBySlugWithImages(slug: string): Promise<ComboDetailWithImagesDto | null> {
+  const combo = await getComboBySlug(slug);
+  if (!combo) {
+    return null;
+  }
+  const slugs = [...new Set(combo.items.map((i) => i.productSlug))];
+  const products = await Promise.all(slugs.map((s) => getProductBySlug(s)));
+  const bySlug = new Map(
+    products.filter((p): p is ProductDetailDto => p !== null).map((p) => [p.slug, p]),
+  );
+
+  const galleryImages: { url: string; altText: string }[] = [];
+  if (combo.imageUrl) {
+    galleryImages.push({ url: combo.imageUrl, altText: combo.name });
+  }
+  for (const s of slugs) {
+    const product = bySlug.get(s) ?? null;
+    const url = mainImageUrl(product);
+    if (url) {
+      galleryImages.push({ url, altText: product?.name ?? combo.name });
+    }
+  }
+  return { ...combo, galleryImages };
+}

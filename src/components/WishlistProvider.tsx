@@ -15,6 +15,10 @@ export interface WishlistItem {
   slug: string;
   name: string;
   variantLabel: string | null;
+  // Main product/kit image, for the wishlist summary thumbnail. Nullable
+  // (no image uploaded) and optional so lines saved before this field
+  // existed still parse from localStorage.
+  imageUrl?: string | null;
   unitPrice: number;
   quantity: number;
 }

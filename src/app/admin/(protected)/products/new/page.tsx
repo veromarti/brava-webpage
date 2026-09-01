@@ -57,9 +57,12 @@ export default function NewProductPage() {
             required
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            rows={3}
+            rows={5}
             className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
           />
+          <p className="mt-1 text-xs text-brava-muted">
+            Los saltos de línea se conservan tal cual en la página del producto.
+          </p>
         </div>
         <BrandPicker
           brands={brands}
