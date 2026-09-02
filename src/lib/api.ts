@@ -206,7 +206,9 @@ export async function getCombosWithImages(): Promise<ComboListItemWithImagesDto[
 
 export interface ComboDetailWithImagesDto extends ComboDetailDto {
   // Kit's own photo (if any) first, then each product's main image — feeds
-  // the detail-page carousel.
+  // the detail-page carousel. Deduped by URL: combo.imageUrl is often the
+  // API's fallback to the first product's image, which the loop below would
+  // otherwise add a second time.
   galleryImages: { url: string; altText: string }[];
 }
 
@@ -221,16 +223,19 @@ export async function getComboBySlugWithImages(slug: string): Promise<ComboDetai
     products.filter((p): p is ProductDetailDto => p !== null).map((p) => [p.slug, p]),
   );
 
+  const seen = new Set<string>();
   const galleryImages: { url: string; altText: string }[] = [];
-  if (combo.imageUrl) {
-    galleryImages.push({ url: combo.imageUrl, altText: combo.name });
-  }
+  const add = (url: string | null, altText: string) => {
+    if (url && !seen.has(url)) {
+      seen.add(url);
+      galleryImages.push({ url, altText });
+    }
+  };
+
+  add(combo.imageUrl, combo.name);
   for (const s of slugs) {
     const product = bySlug.get(s) ?? null;
-    const url = mainImageUrl(product);
-    if (url) {
-      galleryImages.push({ url, altText: product?.name ?? combo.name });
-    }
+    add(mainImageUrl(product), product?.name ?? combo.name);
   }
   return { ...combo, galleryImages };
 }

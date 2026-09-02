@@ -6,7 +6,11 @@ import { KitCollage } from "@/components/KitCollage";
 export function ComboCard({ combo }: { combo: ComboListItemWithImagesDto }) {
   const hasDiscount = combo.finalPrice !== combo.originalPrice;
   // Kit's own photo first (if it has one), then its products' main images.
-  const images = [...(combo.imageUrl ? [combo.imageUrl] : []), ...combo.productImageUrls];
+  // Deduped: combo.imageUrl is often the API's fallback to the first
+  // product's image, already present in productImageUrls.
+  const images = [
+    ...new Set([...(combo.imageUrl ? [combo.imageUrl] : []), ...combo.productImageUrls]),
+  ];
 
   return (
     <Link

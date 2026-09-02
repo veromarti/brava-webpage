@@ -268,6 +268,10 @@ export interface AdminComboDetailDto {
   originalPrice: number;
   manualPrice: number | null;
   finalPrice: number;
+  // Resolved image: the kit's own photo if set, otherwise the API falls back
+  // to the first member product's image. hasOwnImage tells the two apart.
+  imageUrl: string | null;
+  hasOwnImage: boolean;
   items: ComboItemDetailDto[];
 }
 
@@ -280,6 +284,7 @@ export interface ComboDto {
   originalPrice: number;
   manualPrice: number | null;
   finalPrice: number;
+  imageUrl: string | null;
   items: ComboItemDetailDto[];
 }
 
@@ -323,4 +328,33 @@ export async function adminUpdateCombo(
 
 export async function adminDeactivateCombo(slug: string): Promise<void> {
   await authedFetch(`/api/combos/${encodeURIComponent(slug)}`, { method: "DELETE" });
+}
+
+// A kit has a single image slot. Upload replaces whatever was there; the API
+// cleans up the previous object when it was one we'd uploaded for this kit.
+// No Content-Type header on the upload — the browser sets the multipart
+// boundary itself (same reason as adminUploadImage).
+export async function adminUploadComboImage(slug: string, file: File): Promise<{ imageUrl: string }> {
+  const form = new FormData();
+  form.append("File", file);
+  const res = await authedFetch(`/api/combos/${encodeURIComponent(slug)}/image`, {
+    method: "POST",
+    body: form,
+  });
+  return res.json();
+}
+
+// For an image already in the R2 bucket (uploaded via the Cloudflare
+// dashboard). The API rejects any URL outside this project's bucket.
+export async function adminLinkComboImage(slug: string, url: string): Promise<{ imageUrl: string }> {
+  const res = await authedFetch(`/api/combos/${encodeURIComponent(slug)}/image/link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }),
+  });
+  return res.json();
+}
+
+export async function adminRemoveComboImage(slug: string): Promise<void> {
+  await authedFetch(`/api/combos/${encodeURIComponent(slug)}/image`, { method: "DELETE" });
 }
