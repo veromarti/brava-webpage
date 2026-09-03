@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+
 // Server-only: every call here runs in a Server Component, never the
 // browser (ADR-0005: server-rendered pages). That's also why this is
 // API_URL, not NEXT_PUBLIC_API_URL — it's never shipped to the client.
@@ -189,7 +191,7 @@ export interface ComboListItemWithImagesDto extends ComboListItemDto {
 // product it contains so the catalog card can build a collage. Every fetch
 // below is one of the same revalidate:60 cached GETs used elsewhere, so
 // products shared across kits are deduped by Next's fetch cache.
-export async function getCombosWithImages(): Promise<ComboListItemWithImagesDto[]> {
+async function buildCombosWithImages(): Promise<ComboListItemWithImagesDto[]> {
   const combos = await getCombos();
   return Promise.all(
     combos.map(async (combo) => {
@@ -204,6 +206,21 @@ export async function getCombosWithImages(): Promise<ComboListItemWithImagesDto[
   );
 }
 
+// The homepage is force-dynamic, so without this the whole orchestration
+// above — combo list, a detail fetch per combo, a product fetch per distinct
+// member, then the dedupe/assemble — re-runs on every request. The inner
+// fetches are individually cached (revalidate:60) so a warm request stays
+// cheap, but the fan-out still re-assembles each time and one request per
+// 60s pays the full cold cost, growing with the catalog. Caching the
+// assembled result collapses that to a single recompute per 60s window,
+// shared across all requests. Tagged so a future admin mutation can
+// revalidateTag("combos"/"products") to drop it on demand.
+export const getCombosWithImages = unstable_cache(
+  buildCombosWithImages,
+  ["combos-with-images"],
+  { revalidate: 60, tags: ["combos", "products"] },
+);
+
 export interface ComboDetailWithImagesDto extends ComboDetailDto {
   // Kit's own photo (if any) first, then each product's main image — feeds
   // the detail-page carousel. Deduped by URL: combo.imageUrl is often the
@@ -212,7 +229,9 @@ export interface ComboDetailWithImagesDto extends ComboDetailDto {
   galleryImages: { url: string; altText: string }[];
 }
 
-export async function getComboBySlugWithImages(slug: string): Promise<ComboDetailWithImagesDto | null> {
+// Same fan-out shape as getCombosWithImages, one combo deep — cached per
+// slug (unstable_cache folds the argument into the key) for the same reason.
+async function buildComboBySlugWithImages(slug: string): Promise<ComboDetailWithImagesDto | null> {
   const combo = await getComboBySlug(slug);
   if (!combo) {
     return null;
@@ -239,3 +258,9 @@ export async function getComboBySlugWithImages(slug: string): Promise<ComboDetai
   }
   return { ...combo, galleryImages };
 }
+
+export const getComboBySlugWithImages = unstable_cache(
+  buildComboBySlugWithImages,
+  ["combo-by-slug-with-images"],
+  { revalidate: 60, tags: ["combos", "products"] },
+);

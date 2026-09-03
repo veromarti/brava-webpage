@@ -12,6 +12,19 @@ import type { ImageDto } from "@/lib/api";
 export function ProductImageCarousel({ images, productName }: { images: ImageDto[]; productName: string }) {
   const [index, setIndex] = useState(0);
 
+  // App Router reuses this component instance when navigating between two
+  // detail pages (/products/a -> /products/b, or combo -> combo), so `index`
+  // survives the switch. Reset it whenever the image set itself changes,
+  // otherwise a leftover index can point past a now-shorter `images` array
+  // and crash on `images[index]`. `identity` is stable across ordinary
+  // re-renders (same ids -> same string), so this only fires on a real swap.
+  const identity = images.map((img) => img.id).join("|");
+  const [seenIdentity, setSeenIdentity] = useState(identity);
+  if (identity !== seenIdentity) {
+    setSeenIdentity(identity);
+    setIndex(0);
+  }
+
   if (images.length === 0) {
     return (
       <div className="flex aspect-square items-center justify-center overflow-hidden rounded-2xl bg-brava-pink-light">
@@ -20,7 +33,9 @@ export function ProductImageCarousel({ images, productName }: { images: ImageDto
     );
   }
 
-  const current = images[index];
+  // Belt-and-suspenders for the render before the reset above lands (and for
+  // any future caller that mutates `images` without changing its ids).
+  const current = images[index] ?? images[0];
 
   function goTo(i: number) {
     setIndex((i + images.length) % images.length);

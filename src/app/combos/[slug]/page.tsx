@@ -39,7 +39,7 @@ export default async function ComboDetailPage({
           <span className="absolute left-3 top-3 z-10 rounded-full bg-brava-pink px-3 py-1 text-xs font-medium text-white">
             Kit
           </span>
-          <ProductImageCarousel images={carouselImages} productName={combo.name} />
+          <ProductImageCarousel key={combo.slug} images={carouselImages} productName={combo.name} />
         </div>
 
         <div>

@@ -3,7 +3,16 @@
 import { getToken } from "@/lib/auth-client";
 import type { BrandListItemDto, CategoryListItemDto, ComboItemDetailDto } from "@/lib/api";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5299";
+// Must be set (same as API_URL in lib/api.ts). No localhost fallback: a
+// missing var here would silently point every admin write at a local API
+// in a deployed build, which is worse than failing loudly on the admin
+// panel. Public pages don't import this module, so the throw can't take
+// the storefront down.
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+if (!API_URL) {
+  throw new Error("NEXT_PUBLIC_API_URL no está definida");
+}
 
 export class ApiError extends Error {
   constructor(

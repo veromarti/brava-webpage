@@ -26,7 +26,7 @@ export default async function ProductDetailPage({
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
       <div className="grid gap-8 sm:grid-cols-2">
-        <ProductImageCarousel images={product.images} productName={product.name} />
+        <ProductImageCarousel key={product.slug} images={product.images} productName={product.name} />
 
         <div>
           <p className="text-xs uppercase tracking-wide text-brava-muted">
