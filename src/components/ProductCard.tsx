@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ProductListItemDto } from "@/lib/api";
 import { formatPriceRange } from "@/lib/format";
+import { CATALOG_CARD_SIZES } from "@/components/catalogImageSizes";
 
 export function ProductCard({ product }: { product: ProductListItemDto }) {
   return (
@@ -14,9 +15,12 @@ export function ProductCard({ product }: { product: ProductListItemDto }) {
           <Image
             src={product.imageUrl}
             alt={product.name}
-            width={400}
-            height={400}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            fill
+            // Explicit even though it's the next/image default: catalog cards
+            // are a long scrolling grid, only the first row is ever on screen.
+            loading="lazy"
+            sizes={CATALOG_CARD_SIZES}
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center p-4 text-center text-sm text-brava-ink">

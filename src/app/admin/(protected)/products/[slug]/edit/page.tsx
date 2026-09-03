@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { FaPencil, FaTrashCan, FaEye, FaEyeSlash, FaFloppyDisk, FaXmark } from "react-icons/fa6";
 import {
   adminUpdateProduct,
   adminCreateVariant,
+  adminUpdateVariant,
   adminActivateVariant,
   adminDeactivateVariant,
+  adminDeleteVariantPermanently,
   adminUpdateStock,
   adminUploadImage,
   adminLinkImage,
@@ -15,44 +18,171 @@ import {
   getCategoriesForAdmin,
   getProductForAdmin,
   ApiError,
+  type AdminVariantDto,
+  type AdminProductDetailDto,
 } from "@/lib/api-admin";
-import type { BrandListItemDto, CategoryListItemDto, ProductVariantDto, ImageDto } from "@/lib/api";
+import type { BrandListItemDto, CategoryListItemDto } from "@/lib/api";
 import { BrandPicker } from "@/components/admin/BrandPicker";
+import { IconButton } from "@/components/admin/IconButton";
 import { Select } from "@/components/Select";
 import { variantLabel } from "@/lib/format";
-
-interface ProductForEdit {
-  id: string;
-  slug: string;
-  name: string;
-  description: string;
-  brandName: string;
-  categoryName: string;
-  isActive: boolean;
-  variants: ProductVariantDto[];
-  images: ImageDto[];
-}
 
 // Not every variant is a tone — Milagros Perfume Capilar is $8.000/30ml vs
 // $27.000/120ml, no tone involved at all. Units/volumeMl/massG cover size
 // variants; a variant can mix a tone with a size too (both sets of fields
 // are independent, not either/or).
-const emptyVariantForm = {
+interface VariantFieldValues {
+  toneCode: string;
+  toneName: string;
+  units: string;
+  volumeMl: string;
+  massG: string;
+  costPrice: string;
+  sellPrice: string;
+  physicalStock: string;
+  availableOnDemand: boolean;
+  isActive: boolean;
+}
+
+const emptyVariantForm: VariantFieldValues = {
   toneCode: "",
   toneName: "",
   units: "",
   volumeMl: "",
   massG: "",
+  costPrice: "",
   sellPrice: "",
   physicalStock: "0",
   availableOnDemand: false,
   isActive: true,
 };
 
+// The edit form also carries the SKU (no visible field, but a full-replace
+// PUT would otherwise wipe it) — the add form never sets one.
+type EditVariantForm = VariantFieldValues & { sku: string };
+
+const inputClass =
+  "mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink";
+
+// Shared field set for "Agregar variante" and the per-row "Editar" form.
+function VariantFieldset({
+  values,
+  onChange,
+}: {
+  values: VariantFieldValues;
+  onChange: (patch: Partial<VariantFieldValues>) => void;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-brava-ink">Tono/código</label>
+          <input
+            value={values.toneCode}
+            onChange={(e) => onChange({ toneCode: e.target.value })}
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brava-ink">Nombre del tono</label>
+          <input
+            value={values.toneName}
+            onChange={(e) => onChange({ toneName: e.target.value })}
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brava-ink">Unidades</label>
+          <input
+            type="number"
+            min={0}
+            value={values.units}
+            onChange={(e) => onChange({ units: e.target.value })}
+            placeholder='p. ej. "180 unidades"'
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brava-ink">Volumen (ml)</label>
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={values.volumeMl}
+            onChange={(e) => onChange({ volumeMl: e.target.value })}
+            placeholder="p. ej. 30 o 120"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brava-ink">Peso/masa (g)</label>
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={values.massG}
+            onChange={(e) => onChange({ massG: e.target.value })}
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brava-ink">Costo (COP)</label>
+          <input
+            type="number"
+            min={0}
+            value={values.costPrice}
+            onChange={(e) => onChange({ costPrice: e.target.value })}
+            placeholder="Costo interno — para márgenes"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brava-ink">Precio de venta (COP)</label>
+          <input
+            type="number"
+            required
+            min={0}
+            value={values.sellPrice}
+            onChange={(e) => onChange({ sellPrice: e.target.value })}
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-brava-ink">Stock físico</label>
+          <input
+            type="number"
+            required
+            min={0}
+            value={values.physicalStock}
+            onChange={(e) => onChange({ physicalStock: e.target.value })}
+            className={inputClass}
+          />
+        </div>
+      </div>
+      <label className="flex items-center gap-2 text-sm text-brava-ink">
+        <input
+          type="checkbox"
+          checked={values.availableOnDemand}
+          onChange={(e) => onChange({ availableOnDemand: e.target.checked })}
+        />
+        Disponible bajo pedido cuando no haya stock
+      </label>
+      <label className="flex items-center gap-2 text-sm text-brava-ink">
+        <input
+          type="checkbox"
+          checked={values.isActive}
+          onChange={(e) => onChange({ isActive: e.target.checked })}
+        />
+        Activa (requiere precio)
+      </label>
+    </>
+  );
+}
+
 export default function EditProductPage() {
   const { slug } = useParams<{ slug: string }>();
 
-  const [product, setProduct] = useState<ProductForEdit | null>(null);
+  const [product, setProduct] = useState<AdminProductDetailDto | null>(null);
   const [brands, setBrands] = useState<BrandListItemDto[]>([]);
   const [categories, setCategories] = useState<CategoryListItemDto[]>([]);
 
@@ -63,6 +193,10 @@ export default function EditProductPage() {
   const [isActive, setIsActive] = useState(true);
 
   const [variantForm, setVariantForm] = useState(emptyVariantForm);
+  const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
+  const [editVariantForm, setEditVariantForm] = useState<EditVariantForm>({ ...emptyVariantForm, sku: "" });
+  const [savingEditVariant, setSavingEditVariant] = useState(false);
+  const [deletingVariantId, setDeletingVariantId] = useState<string | null>(null);
   const [stockEdits, setStockEdits] = useState<Record<string, string>>({});
   const [savingStockId, setSavingStockId] = useState<string | null>(null);
   const [imageSource, setImageSource] = useState<"upload" | "link">("upload");
@@ -75,15 +209,21 @@ export default function EditProductPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  function applyLoadedProduct(p: ProductForEdit, b: BrandListItemDto[], c: CategoryListItemDto[]) {
+  function applyLoadedProduct(
+    p: AdminProductDetailDto,
+    b: BrandListItemDto[],
+    c: CategoryListItemDto[],
+  ) {
     setProduct(p);
     setBrands(b);
     setCategories(c);
     setName(p.name);
     setDescription(p.description);
     setIsActive(p.isActive);
-    setBrandId(b.find((x) => x.name === p.brandName)?.id ?? "");
-    setCategoryId(c.find((x) => x.name === p.categoryName)?.id ?? "");
+    // brandId/categoryId come straight from the admin endpoint now — no
+    // fragile match-by-name.
+    setBrandId(p.brandId);
+    setCategoryId(p.categoryId);
   }
 
   // Used by mutation handlers below (not inside an effect, so the
@@ -141,7 +281,7 @@ export default function EditProductPage() {
         units: variantForm.units ? Number(variantForm.units) : null,
         volumeMl: variantForm.volumeMl ? Number(variantForm.volumeMl) : null,
         massG: variantForm.massG ? Number(variantForm.massG) : null,
-        costPrice: null,
+        costPrice: variantForm.costPrice ? Number(variantForm.costPrice) : null,
         sellPrice: variantForm.sellPrice ? Number(variantForm.sellPrice) : null,
         physicalStock: Number(variantForm.physicalStock),
         availableOnDemand: variantForm.availableOnDemand,
@@ -175,6 +315,80 @@ export default function EditProductPage() {
       await reload();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Error al activar la variante.");
+    }
+  }
+
+  function startEditVariant(v: AdminVariantDto) {
+    setError(null);
+    setMessage(null);
+    setEditingVariantId(v.id);
+    setEditVariantForm({
+      sku: v.sku ?? "",
+      toneCode: v.toneCode ?? "",
+      toneName: v.toneName ?? "",
+      units: v.units != null ? String(v.units) : "",
+      volumeMl: v.volumeMl != null ? String(v.volumeMl) : "",
+      massG: v.massG != null ? String(v.massG) : "",
+      costPrice: v.costPrice != null ? String(v.costPrice) : "",
+      sellPrice: v.sellPrice != null ? String(v.sellPrice) : "",
+      physicalStock: String(v.physicalStock),
+      availableOnDemand: v.availableOnDemand,
+      isActive: v.isActive,
+    });
+  }
+
+  async function handleUpdateVariant(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingVariantId) return;
+    setError(null);
+    setMessage(null);
+    setSavingEditVariant(true);
+    try {
+      await adminUpdateVariant(slug, editingVariantId, {
+        sku: editVariantForm.sku || null,
+        toneCode: editVariantForm.toneCode || null,
+        toneName: editVariantForm.toneName || null,
+        units: editVariantForm.units ? Number(editVariantForm.units) : null,
+        volumeMl: editVariantForm.volumeMl ? Number(editVariantForm.volumeMl) : null,
+        massG: editVariantForm.massG ? Number(editVariantForm.massG) : null,
+        costPrice: editVariantForm.costPrice ? Number(editVariantForm.costPrice) : null,
+        sellPrice: editVariantForm.sellPrice ? Number(editVariantForm.sellPrice) : null,
+        physicalStock: Number(editVariantForm.physicalStock),
+        availableOnDemand: editVariantForm.availableOnDemand,
+        isActive: editVariantForm.isActive,
+      });
+      setEditingVariantId(null);
+      setMessage("Variante actualizada.");
+      await reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error al actualizar la variante.");
+    } finally {
+      setSavingEditVariant(false);
+    }
+  }
+
+  // Hard delete (removes the row), unlike Desactivar. The API returns 409 —
+  // shown here as its own message — when the variant is still in a kit.
+  async function handleDeleteVariantPermanently(v: AdminVariantDto) {
+    if (
+      !confirm(
+        `¿Eliminar definitivamente la variante "${variantLabel(v)}"? Esta acción no se puede deshacer.`,
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    setMessage(null);
+    setDeletingVariantId(v.id);
+    try {
+      await adminDeleteVariantPermanently(slug, v.id);
+      if (editingVariantId === v.id) setEditingVariantId(null);
+      setMessage("Variante eliminada.");
+      await reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error al eliminar la variante.");
+    } finally {
+      setDeletingVariantId(null);
     }
   }
 
@@ -440,59 +654,108 @@ export default function EditProductPage() {
           </thead>
           <tbody>
             {product.variants.map((v) => (
-              <tr key={v.id} className="border-b border-brava-pink-light/50">
-                <td className="py-2 text-brava-ink">{variantLabel(v)}</td>
-                <td className="py-2 text-brava-muted">
-                  {v.sellPrice !== null ? `$${v.sellPrice.toLocaleString("es-CO")}` : "—"}
-                </td>
-                <td className="py-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min={0}
-                      value={stockEdits[v.id] ?? String(v.physicalStock)}
-                      onChange={(e) => setStockEdits((prev) => ({ ...prev, [v.id]: e.target.value }))}
-                      className="w-20 rounded-lg border border-brava-pink-light px-2 py-1 text-brava-muted outline-none focus:border-brava-pink"
-                    />
-                    {stockEdits[v.id] !== undefined && stockEdits[v.id] !== String(v.physicalStock) && (
-                      <button
-                        type="button"
-                        onClick={() => handleSaveStock(v.id)}
-                        disabled={savingStockId === v.id}
-                        className="text-xs text-brava-pink-dark hover:underline disabled:opacity-50"
-                      >
-                        {savingStockId === v.id ? "…" : "Guardar"}
-                      </button>
+              <Fragment key={v.id}>
+                <tr className="border-b border-brava-pink-light/50">
+                  <td className="py-2 text-brava-ink">{variantLabel(v)}</td>
+                  <td className="py-2 text-brava-muted">
+                    {v.sellPrice !== null ? `$${v.sellPrice.toLocaleString("es-CO")}` : "—"}
+                  </td>
+                  <td className="py-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={0}
+                        value={stockEdits[v.id] ?? String(v.physicalStock)}
+                        onChange={(e) => setStockEdits((prev) => ({ ...prev, [v.id]: e.target.value }))}
+                        className="w-20 rounded-lg border border-brava-pink-light px-2 py-1 text-brava-muted outline-none focus:border-brava-pink"
+                      />
+                      {stockEdits[v.id] !== undefined && stockEdits[v.id] !== String(v.physicalStock) && (
+                        <IconButton
+                          size="sm"
+                          tone="primary"
+                          icon={<FaFloppyDisk aria-hidden />}
+                          label="Guardar stock"
+                          busy={savingStockId === v.id}
+                          onClick={() => handleSaveStock(v.id)}
+                        />
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-2">
+                    {v.isActive ? (
+                      <span className="text-emerald-700">Activa</span>
+                    ) : (
+                      <span className="text-brava-muted">Inactiva</span>
                     )}
-                  </div>
-                </td>
-                <td className="py-2">
-                  {v.isActive ? (
-                    <span className="text-emerald-700">Activa</span>
-                  ) : (
-                    <span className="text-brava-muted">Inactiva</span>
-                  )}
-                </td>
-                <td className="py-2">
-                  {v.isActive ? (
-                    <button
-                      type="button"
-                      onClick={() => handleDeactivateVariant(v.id)}
-                      className="text-brava-muted hover:text-red-600"
-                    >
-                      Desactivar
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleActivateVariant(v.id)}
-                      className="text-brava-pink-dark hover:underline"
-                    >
-                      Activar
-                    </button>
-                  )}
-                </td>
-              </tr>
+                  </td>
+                  <td className="py-2">
+                    <div className="flex items-center gap-2">
+                      {editingVariantId === v.id ? (
+                        <IconButton
+                          icon={<FaXmark aria-hidden />}
+                          label="Cerrar edición"
+                          onClick={() => setEditingVariantId(null)}
+                        />
+                      ) : (
+                        <IconButton
+                          icon={<FaPencil aria-hidden />}
+                          label="Editar variante"
+                          onClick={() => startEditVariant(v)}
+                        />
+                      )}
+                      {v.isActive ? (
+                        <IconButton
+                          icon={<FaEyeSlash aria-hidden />}
+                          label="Desactivar variante"
+                          onClick={() => handleDeactivateVariant(v.id)}
+                        />
+                      ) : (
+                        <IconButton
+                          icon={<FaEye aria-hidden />}
+                          label="Activar variante"
+                          onClick={() => handleActivateVariant(v.id)}
+                        />
+                      )}
+                      <IconButton
+                        icon={<FaTrashCan aria-hidden />}
+                        label="Eliminar variante definitivamente"
+                        tone="danger"
+                        busy={deletingVariantId === v.id}
+                        onClick={() => handleDeleteVariantPermanently(v)}
+                      />
+                    </div>
+                  </td>
+                </tr>
+                {editingVariantId === v.id && (
+                  <tr className="border-b border-brava-pink-light/50 bg-brava-pink-light/10">
+                    <td colSpan={5} className="px-2">
+                      <form onSubmit={handleUpdateVariant} className="flex flex-col gap-4 py-4">
+                        <p className="text-xs text-brava-muted">
+                          Editando <span className="font-medium text-brava-ink">{variantLabel(v)}</span>
+                        </p>
+                        <VariantFieldset
+                          values={editVariantForm}
+                          onChange={(patch) => setEditVariantForm((f) => ({ ...f, ...patch }))}
+                        />
+                        <div className="flex items-center gap-2">
+                          <IconButton
+                            type="submit"
+                            tone="primary"
+                            icon={<FaFloppyDisk aria-hidden />}
+                            label="Guardar variante"
+                            busy={savingEditVariant}
+                          />
+                          <IconButton
+                            icon={<FaXmark aria-hidden />}
+                            label="Cancelar"
+                            onClick={() => setEditingVariantId(null)}
+                          />
+                        </div>
+                      </form>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ))}
           </tbody>
         </table>
@@ -507,96 +770,10 @@ export default function EditProductPage() {
           Todos estos campos son opcionales e independientes — un producto puede variar por tono,
           por tamaño, por ambos, o por ninguno.
         </p>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-brava-ink">Tono/código</label>
-            <input
-              value={variantForm.toneCode}
-              onChange={(e) => setVariantForm({ ...variantForm, toneCode: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-brava-ink">Nombre del tono</label>
-            <input
-              value={variantForm.toneName}
-              onChange={(e) => setVariantForm({ ...variantForm, toneName: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-brava-ink">Unidades</label>
-            <input
-              type="number"
-              min={0}
-              value={variantForm.units}
-              onChange={(e) => setVariantForm({ ...variantForm, units: e.target.value })}
-              placeholder='p. ej. "180 unidades"'
-              className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-brava-ink">Volumen (ml)</label>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={variantForm.volumeMl}
-              onChange={(e) => setVariantForm({ ...variantForm, volumeMl: e.target.value })}
-              placeholder="p. ej. 30 o 120"
-              className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-brava-ink">Peso/masa (g)</label>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={variantForm.massG}
-              onChange={(e) => setVariantForm({ ...variantForm, massG: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-brava-ink">Precio (COP)</label>
-            <input
-              type="number"
-              required
-              min={0}
-              value={variantForm.sellPrice}
-              onChange={(e) => setVariantForm({ ...variantForm, sellPrice: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-brava-ink">Stock físico</label>
-            <input
-              type="number"
-              required
-              min={0}
-              value={variantForm.physicalStock}
-              onChange={(e) => setVariantForm({ ...variantForm, physicalStock: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
-            />
-          </div>
-        </div>
-        <label className="flex items-center gap-2 text-sm text-brava-ink">
-          <input
-            type="checkbox"
-            checked={variantForm.availableOnDemand}
-            onChange={(e) => setVariantForm({ ...variantForm, availableOnDemand: e.target.checked })}
-          />
-          Disponible bajo pedido cuando no haya stock
-        </label>
-        <label className="flex items-center gap-2 text-sm text-brava-ink">
-          <input
-            type="checkbox"
-            checked={variantForm.isActive}
-            onChange={(e) => setVariantForm({ ...variantForm, isActive: e.target.checked })}
-          />
-          Activa (requiere precio)
-        </label>
+        <VariantFieldset
+          values={variantForm}
+          onChange={(patch) => setVariantForm((f) => ({ ...f, ...patch }))}
+        />
         <button
           type="submit"
           className="self-start rounded-full bg-brava-pink px-5 py-2.5 font-medium text-white transition-colors hover:bg-brava-pink-dark"

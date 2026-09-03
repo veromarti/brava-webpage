@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { CATALOG_CARD_SIZES, CATALOG_COLLAGE_TILE_SIZES } from "@/components/catalogImageSizes";
 
 // Adaptive collage for a kit's catalog card: the composing products rarely
 // come in fours, so the layout changes with the count (the same pattern
@@ -19,9 +20,13 @@ export function KitCollage({ images, name }: { images: string[]; name: string })
     );
   }
 
+  // One shot fills the whole card; any split layout makes each tile at most
+  // half the card wide.
+  const tileSizes = shots.length === 1 ? CATALOG_CARD_SIZES : CATALOG_COLLAGE_TILE_SIZES;
+
   const tile = (src: string, key: number, overlay?: string) => (
     <div key={key} className="relative h-full w-full overflow-hidden bg-brava-pink-light">
-      <Image src={src} alt={name} width={300} height={300} className="h-full w-full object-cover" />
+      <Image src={src} alt={name} fill loading="lazy" sizes={tileSizes} className="object-cover" />
       {overlay && (
         <div className="absolute inset-0 flex items-center justify-center bg-brava-ink/45 text-lg font-semibold text-white">
           {overlay}

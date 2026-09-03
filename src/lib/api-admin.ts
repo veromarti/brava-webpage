@@ -1,7 +1,7 @@
 "use client";
 
 import { getToken } from "@/lib/auth-client";
-import type { BrandListItemDto, CategoryListItemDto, ComboItemDetailDto } from "@/lib/api";
+import type { BrandListItemDto, CategoryListItemDto, ComboItemDetailDto, ImageDto } from "@/lib/api";
 
 // Must be set (same as API_URL in lib/api.ts). No localhost fallback: a
 // missing var here would silently point every admin write at a local API
@@ -153,6 +153,29 @@ export async function adminCreateVariant(slug: string, payload: CreateVariantPay
   return res.json();
 }
 
+// Full replace of a variant's editable fields (PUT) — same shape as create.
+// Includes costPrice: the edit form loads it from GET /api/products/{slug}/admin
+// (getProductForAdmin), so round-tripping it doesn't wipe the stored value.
+export type UpdateVariantPayload = CreateVariantPayload;
+
+export async function adminUpdateVariant(slug: string, variantId: string, payload: UpdateVariantPayload) {
+  const res = await authedFetch(`/api/products/${encodeURIComponent(slug)}/variants/${variantId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+// Hard delete — removes the row. The API returns 409 (surfaced here as an
+// ApiError with the server's message) when the variant is still in a kit;
+// adminDeactivateVariant is the soft alternative that keeps the row.
+export async function adminDeleteVariantPermanently(slug: string, variantId: string): Promise<void> {
+  await authedFetch(`/api/products/${encodeURIComponent(slug)}/variants/${variantId}/permanent`, {
+    method: "DELETE",
+  });
+}
+
 // No body — the API checks the variant's already-stored SellPrice rather
 // than asking the client to resend one. The admin edit page only ever has
 // the public ProductVariantDto loaded (no CostPrice on it), so a full PUT
@@ -240,10 +263,50 @@ export async function getCategoriesForAdmin(): Promise<CategoryListItemDto[]> {
   return res.json();
 }
 
-export async function getProductForAdmin(slug: string) {
-  const res = await fetch(`${API_URL}/api/products/${encodeURIComponent(slug)}`);
-  if (!res.ok) throw new ApiError("Producto no encontrado.", res.status);
-  return res.json();
+// Admin variant shape: the public ProductVariantDto in lib/api.ts, plus
+// productId and costPrice.
+export interface AdminVariantDto {
+  id: string;
+  productId: string;
+  sku: string | null;
+  toneCode: string | null;
+  toneName: string | null;
+  units: number | null;
+  volumeMl: number | null;
+  massG: number | null;
+  costPrice: number | null;
+  sellPrice: number | null;
+  physicalStock: number;
+  availableOnDemand: boolean;
+  isActive: boolean;
+}
+
+export interface AdminProductDetailDto {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  brandName: string;
+  categoryName: string;
+  brandId: string;
+  categoryId: string;
+  isActive: boolean;
+  variants: AdminVariantDto[];
+  images: ImageDto[];
+}
+
+// GET /api/products/{slug}/admin — authed, and unlike the public detail
+// endpoint it carries CostPrice and BrandId/CategoryId.
+export async function getProductForAdmin(slug: string): Promise<AdminProductDetailDto> {
+  try {
+    const res = await authedFetch(`/api/products/${encodeURIComponent(slug)}/admin`);
+    return res.json();
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      throw new ApiError("Producto no encontrado.", 404);
+    }
+    throw err;
+  }
 }
 
 // 409 on a duplicate name (case-insensitive) — the API's own dedup rule,

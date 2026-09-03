@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { adminGetProducts, getProductForAdmin, type AdminProductListItemDto } from "@/lib/api-admin";
-import type { ProductVariantDto } from "@/lib/api";
+import {
+  adminGetProducts,
+  getProductForAdmin,
+  type AdminProductListItemDto,
+  type AdminVariantDto,
+} from "@/lib/api-admin";
 import { variantLabel, formatCop } from "@/lib/format";
 import { Select } from "@/components/Select";
 
@@ -24,7 +28,7 @@ export function ComboItemsEditor({
 }) {
   const [products, setProducts] = useState<AdminProductListItemDto[]>([]);
   const [selectedProductSlug, setSelectedProductSlug] = useState("");
-  const [productVariants, setProductVariants] = useState<ProductVariantDto[]>([]);
+  const [productVariants, setProductVariants] = useState<AdminVariantDto[]>([]);
   const [selectedVariantId, setSelectedVariantId] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +45,7 @@ export function ComboItemsEditor({
     if (!slug) return;
     try {
       const detail = await getProductForAdmin(slug);
-      setProductVariants(detail.variants.filter((v: ProductVariantDto) => v.sellPrice !== null));
+      setProductVariants(detail.variants.filter((v) => v.sellPrice !== null));
     } catch {
       setError("No se pudo cargar las variantes de ese producto.");
     }

@@ -1,4 +1,4 @@
-import { getProducts, getBrands, getCategories, getCombosWithImages } from "@/lib/api";
+import { getProducts, getBrands, getCategories, getCombos, getCombosWithImages } from "@/lib/api";
 import { CatalogFilters } from "@/components/CatalogFilters";
 import { CatalogGrid } from "@/components/CatalogGrid";
 
@@ -12,19 +12,23 @@ export const dynamic = "force-dynamic";
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ brand?: string; category?: string }>;
+  searchParams: Promise<{ brand?: string; category?: string; view?: string }>;
 }) {
-  const { brand, category } = await searchParams;
-  const hasFilters = Boolean(brand || category);
+  const { brand, category, view } = await searchParams;
+  const kitsOnly = view === "kits";
+  const hasProductFilters = Boolean(brand || category);
 
   // Combos span brands/categories by design (that's the point of a kit), so
-  // they only show on the unfiltered view — there's no coherent way to
-  // decide whether a combo "belongs" to one brand/category filter.
-  const [products, brands, categories, combos] = await Promise.all([
-    getProducts({ brand, category }),
+  // a brand/category filter hides them — but the "Kits" pill (?view=kits) is
+  // their own view, showing every kit and no standalone products.
+  const showCombos = kitsOnly || !hasProductFilters;
+
+  const [products, brands, categories, allCombos, combos] = await Promise.all([
+    kitsOnly ? Promise.resolve([]) : getProducts({ brand, category }),
     getBrands(),
     getCategories(),
-    hasFilters ? Promise.resolve([]) : getCombosWithImages(),
+    getCombos(), // cheap + cached; just to know whether to show the Kits pill
+    showCombos ? getCombosWithImages() : Promise.resolve([]),
   ]);
 
   const totalCount = products.length + combos.length;
@@ -34,12 +38,10 @@ export default async function Home({
       <h1 className="font-display text-3xl text-brava-ink">Catálogo</h1>
       <p className="mt-1 text-brava-muted">Maquillaje y skincare · pedidos por WhatsApp</p>
 
-      <CatalogFilters brands={brands} categories={categories} />
+      <CatalogFilters brands={brands} categories={categories} hasKits={allCombos.length > 0} />
 
       {totalCount === 0 ? (
-        <p className="mt-10 text-brava-muted">
-          No hay productos disponibles con estos filtros.
-        </p>
+        <p className="mt-10 text-brava-muted">No hay resultados con estos filtros.</p>
       ) : (
         <CatalogGrid products={products} combos={combos} />
       )}
