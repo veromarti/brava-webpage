@@ -39,12 +39,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               {/* Logotipo institucional (brandbook p.9): the register for
                   nav/firma comercial, where legibility matters more than
                   the campaign-style lockup. */}
-              <Link href="/" aria-label="BRAVA — Tienda Virtual">
+              <Link href="/" aria-label="BRAVA — Tienda Multimarca">
                 <Image
                   src="/logo-brava-institucional.png"
-                  alt="BRAVA — Tienda Virtual"
-                  width={1516}
-                  height={616}
+                  alt="BRAVA — Tienda Multimarca"
+                  width={1954}
+                  height={748}
                   priority
                   className="h-9 w-auto"
                 />
