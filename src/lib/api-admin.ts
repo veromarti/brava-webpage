@@ -430,3 +430,39 @@ export async function adminLinkComboImage(slug: string, url: string): Promise<{ 
 export async function adminRemoveComboImage(slug: string): Promise<void> {
   await authedFetch(`/api/combos/${encodeURIComponent(slug)}/image`, { method: "DELETE" });
 }
+
+// --- Delivery zones (Phase 1) ------------------------------------------------
+
+export interface DeliveryZoneDto {
+  id: string;
+  name: string;
+  price: number;
+  isActive: boolean;
+}
+
+export async function adminGetDeliveryZones(): Promise<DeliveryZoneDto[]> {
+  const res = await authedFetch("/api/delivery-zones");
+  return res.json();
+}
+
+// 409 (ApiError with the server message) on a duplicate zone name.
+export async function adminCreateDeliveryZone(name: string, price: number): Promise<DeliveryZoneDto> {
+  const res = await authedFetch("/api/delivery-zones", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, price }),
+  });
+  return res.json();
+}
+
+export async function adminUpdateDeliveryZone(
+  id: string,
+  payload: { name: string; price: number; isActive: boolean },
+): Promise<DeliveryZoneDto> {
+  const res = await authedFetch(`/api/delivery-zones/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
