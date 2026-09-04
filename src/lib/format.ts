@@ -28,6 +28,25 @@ export function variantLabel(variant: { toneName: string | null; toneCode: strin
   return parts.length > 0 ? parts.join(" · ") : "Único";
 }
 
+export const ORDER_STATUS_LABELS: Record<string, string> = {
+  Pendiente: "Pendiente",
+  Confirmado: "Confirmado",
+  EnPreparacion: "En preparación",
+  EnCamino: "En camino",
+  Entregado: "Entregado",
+  Cancelado: "Cancelado",
+};
+
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  Pendiente: "Pendiente",
+  Pagado: "Pagado",
+};
+
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  Efectivo: "Efectivo",
+  Transferencia: "Transferencia",
+};
+
 // ADR-0007's display rule, even though the reservation math behind
 // available_stock isn't implemented — this reads PhysicalStock/AvailableOnDemand
 // directly, same fields ProductVariantDto already exposes.

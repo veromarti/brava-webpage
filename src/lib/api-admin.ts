@@ -466,3 +466,114 @@ export async function adminUpdateDeliveryZone(
   });
   return res.json();
 }
+
+// --- Orders (Phase 1) --------------------------------------------------
+
+// The API serializes these with JsonStringEnumConverter — string names over
+// the wire, matching these unions exactly (declaration order on the backend
+// doesn't matter here, only the names do).
+export type OrderStatus = "Pendiente" | "Confirmado" | "EnPreparacion" | "EnCamino" | "Entregado" | "Cancelado";
+export type PaymentStatus = "Pendiente" | "Pagado";
+export type PaymentMethod = "Efectivo" | "Transferencia";
+
+export interface OrderListItemDto {
+  id: string;
+  number: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  contactName: string;
+  contactPhone: string;
+  total: number;
+  createdAt: string;
+}
+
+export interface OrderItemDetailDto {
+  id: string;
+  productVariantId: string | null;
+  comboId: string | null;
+  description: string;
+  unitPrice: number;
+  unitCost: number | null;
+  quantity: number;
+  lineTotal: number;
+}
+
+export interface OrderDetailDto {
+  id: string;
+  number: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod | null;
+  paidAt: string | null;
+  customerId: string | null;
+  contactName: string;
+  contactPhone: string;
+  deliveryAddress: string;
+  deliveryZoneId: string | null;
+  deliveryZoneName: string | null;
+  deliveryFee: number;
+  subtotal: number;
+  total: number;
+  notes: string | null;
+  createdAt: string;
+  items: OrderItemDetailDto[];
+}
+
+export interface CreateOrderItemPayload {
+  productVariantId: string | null;
+  comboId: string | null;
+  quantity: number;
+}
+
+export interface CreateOrderPayload {
+  contactName: string;
+  contactPhone: string;
+  deliveryAddress: string;
+  deliveryZoneId: string | null;
+  items: CreateOrderItemPayload[];
+  notes: string | null;
+}
+
+export async function adminGetOrders(filters?: {
+  status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+}): Promise<OrderListItemDto[]> {
+  const params = new URLSearchParams();
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.paymentStatus) params.set("paymentStatus", filters.paymentStatus);
+  const qs = params.toString();
+  const res = await authedFetch(`/api/orders${qs ? `?${qs}` : ""}`);
+  return res.json();
+}
+
+export async function adminGetOrder(number: string): Promise<OrderDetailDto> {
+  const res = await authedFetch(`/api/orders/${encodeURIComponent(number)}`);
+  return res.json();
+}
+
+export async function adminCreateOrder(payload: CreateOrderPayload): Promise<OrderDetailDto> {
+  const res = await authedFetch("/api/orders", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+export async function adminUpdateOrderStatus(number: string, status: OrderStatus): Promise<OrderDetailDto> {
+  const res = await authedFetch(`/api/orders/${encodeURIComponent(number)}/status`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  return res.json();
+}
+
+export async function adminMarkOrderPaid(number: string, paymentMethod: PaymentMethod): Promise<OrderDetailDto> {
+  const res = await authedFetch(`/api/orders/${encodeURIComponent(number)}/payment`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ paymentMethod }),
+  });
+  return res.json();
+}
