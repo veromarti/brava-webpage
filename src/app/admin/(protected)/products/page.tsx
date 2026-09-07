@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { FaPencil, FaEyeSlash } from "react-icons/fa6";
 import { adminGetProducts, adminDeactivateProduct, AdminProductListItemDto, ApiError } from "@/lib/api-admin";
 import { Select } from "@/components/Select";
+import { IconButton } from "@/components/admin/IconButton";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProductListItemDto[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deactivatingSlug, setDeactivatingSlug] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
 
@@ -57,11 +59,14 @@ export default function AdminProductsPage() {
     if (!confirm(`¿Desactivar "${slug}"? Dejará de verse en el catálogo público.`)) {
       return;
     }
+    setDeactivatingSlug(slug);
     try {
       await adminDeactivateProduct(slug);
       await reload();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Error al desactivar.");
+    } finally {
+      setDeactivatingSlug(null);
     }
   }
 
@@ -114,58 +119,61 @@ export default function AdminProductsPage() {
             </span>
           </div>
 
-        <table className="mt-6 w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-brava-pink-light text-brava-muted">
-              <th className="py-2 font-medium">Nombre</th>
-              <th className="py-2 font-medium">Marca</th>
-              <th className="py-2 font-medium">Categoría</th>
-              <th className="py-2 font-medium">Imágenes</th>
-              <th className="py-2 font-medium">Estado</th>
-              <th className="py-2 font-medium">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProducts.map((p) => (
-              <tr key={p.id} className="border-b border-brava-pink-light/50">
-                <td className="py-2 text-brava-ink">{p.name}</td>
-                <td className="py-2 text-brava-muted">{p.brandName}</td>
-                <td className="py-2 text-brava-muted">{p.categoryName}</td>
-                <td className="py-2">
-                  {p.imageCount > 0 ? (
-                    <span className="text-brava-muted">{p.imageCount}</span>
-                  ) : (
-                    <span className="font-medium text-red-600">Sin imágenes</span>
-                  )}
-                </td>
-                <td className="py-2">
-                  {p.isActive ? (
-                    <span className="text-emerald-700">Activo</span>
-                  ) : (
-                    <span className="text-brava-muted">Inactivo</span>
-                  )}
-                </td>
-                <td className="py-2">
-                  <Link
-                    href={`/admin/products/${p.slug}/edit`}
-                    className="text-brava-pink-dark hover:underline"
-                  >
-                    Editar
-                  </Link>
-                  {p.isActive && (
-                    <button
-                      type="button"
-                      onClick={() => handleDeactivate(p.slug)}
-                      className="ml-4 text-brava-muted hover:text-red-600"
-                    >
-                      Desactivar
-                    </button>
-                  )}
-                </td>
+        <div className="mt-6 overflow-x-auto">
+          <table className="w-full min-w-[720px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-brava-pink-light text-brava-muted">
+                <th className="py-2 font-medium">Nombre</th>
+                <th className="py-2 font-medium">Marca</th>
+                <th className="py-2 font-medium">Categoría</th>
+                <th className="py-2 font-medium">Imágenes</th>
+                <th className="py-2 font-medium">Estado</th>
+                <th className="py-2 font-medium">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredProducts.map((p) => (
+                <tr key={p.id} className="border-b border-brava-pink-light/50">
+                  <td className="py-2 text-brava-ink">{p.name}</td>
+                  <td className="py-2 text-brava-muted">{p.brandName}</td>
+                  <td className="py-2 text-brava-muted">{p.categoryName}</td>
+                  <td className="py-2">
+                    {p.imageCount > 0 ? (
+                      <span className="text-brava-muted">{p.imageCount}</span>
+                    ) : (
+                      <span className="font-medium text-red-600">Sin imágenes</span>
+                    )}
+                  </td>
+                  <td className="py-2">
+                    {p.isActive ? (
+                      <span className="text-emerald-700">Activo</span>
+                    ) : (
+                      <span className="text-brava-muted">Inactivo</span>
+                    )}
+                  </td>
+                  <td className="py-2">
+                    <div className="flex items-center gap-2">
+                      <IconButton
+                        href={`/admin/products/${p.slug}/edit`}
+                        icon={<FaPencil aria-hidden />}
+                        label={`Editar ${p.name}`}
+                      />
+                      {p.isActive && (
+                        <IconButton
+                          icon={<FaEyeSlash aria-hidden />}
+                          label={`Desactivar ${p.name}`}
+                          tone="danger"
+                          busy={deactivatingSlug === p.slug}
+                          onClick={() => handleDeactivate(p.slug)}
+                        />
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         </>
       )}
     </div>

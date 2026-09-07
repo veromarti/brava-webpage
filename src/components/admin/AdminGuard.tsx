@@ -32,8 +32,10 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   return (
     <div>
       <div className="border-b border-brava-pink-light bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <nav className="flex gap-4 text-sm font-medium text-brava-ink">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* flex-wrap (not a scroll rail) — six short labels read fine
+              across two lines on a phone, and nothing stays hidden off-screen. */}
+          <nav className="flex flex-wrap gap-x-4 gap-y-2 text-sm font-medium text-brava-ink">
             <Link href="/admin/products" className="hover:text-brava-pink-dark">
               Productos
             </Link>
@@ -59,7 +61,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
               clearToken();
               router.push("/admin/login");
             }}
-            className="text-sm text-brava-muted hover:text-brava-pink-dark"
+            className="self-start text-sm text-brava-muted hover:text-brava-pink-dark sm:self-auto"
           >
             Cerrar sesión
           </button>

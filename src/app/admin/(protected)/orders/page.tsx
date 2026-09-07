@@ -89,43 +89,45 @@ export default function AdminOrdersPage() {
       ) : orders.length === 0 ? (
         <p className="mt-6 text-brava-muted">Sin pedidos con esos filtros.</p>
       ) : (
-        <table className="mt-6 w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-brava-pink-light text-brava-muted">
-              <th className="py-2 font-medium">Número</th>
-              <th className="py-2 font-medium">Cliente</th>
-              <th className="py-2 font-medium">Estado</th>
-              <th className="py-2 font-medium">Pago</th>
-              <th className="py-2 font-medium">Total</th>
-              <th className="py-2 font-medium">Fecha</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((o) => (
-              <tr key={o.id} className="border-b border-brava-pink-light/50">
-                <td className="py-2">
-                  <Link href={`/admin/orders/${o.number}`} className="font-medium text-brava-pink-dark hover:underline">
-                    {o.number}
-                  </Link>
-                </td>
-                <td className="py-2 text-brava-ink">
-                  {o.contactName}
-                  <span className="block text-xs text-brava-muted">{o.contactPhone}</span>
-                </td>
-                <td className="py-2 text-brava-ink">{ORDER_STATUS_LABELS[o.status]}</td>
-                <td className="py-2">
-                  {o.paymentStatus === "Pagado" ? (
-                    <span className="text-emerald-700">{PAYMENT_STATUS_LABELS[o.paymentStatus]}</span>
-                  ) : (
-                    <span className="text-brava-muted">{PAYMENT_STATUS_LABELS[o.paymentStatus]}</span>
-                  )}
-                </td>
-                <td className="py-2 font-medium text-brava-ink">{formatCop(o.total)}</td>
-                <td className="py-2 text-brava-muted">{new Date(o.createdAt).toLocaleDateString("es-CO")}</td>
+        <div className="mt-6 overflow-x-auto">
+          <table className="w-full min-w-[720px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-brava-pink-light text-brava-muted">
+                <th className="py-2 font-medium">Número</th>
+                <th className="py-2 font-medium">Cliente</th>
+                <th className="py-2 font-medium">Estado</th>
+                <th className="py-2 font-medium">Pago</th>
+                <th className="py-2 font-medium">Total</th>
+                <th className="py-2 font-medium">Fecha</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orders.map((o) => (
+                <tr key={o.id} className="border-b border-brava-pink-light/50">
+                  <td className="py-2">
+                    <Link href={`/admin/orders/${o.number}`} className="font-medium text-brava-pink-dark hover:underline">
+                      {o.number}
+                    </Link>
+                  </td>
+                  <td className="py-2 text-brava-ink">
+                    {o.contactName}
+                    <span className="block text-xs text-brava-muted">{o.contactPhone}</span>
+                  </td>
+                  <td className="py-2 text-brava-ink">{ORDER_STATUS_LABELS[o.status]}</td>
+                  <td className="py-2">
+                    {o.paymentStatus === "Pagado" ? (
+                      <span className="text-emerald-700">{PAYMENT_STATUS_LABELS[o.paymentStatus]}</span>
+                    ) : (
+                      <span className="text-brava-muted">{PAYMENT_STATUS_LABELS[o.paymentStatus]}</span>
+                    )}
+                  </td>
+                  <td className="py-2 font-medium text-brava-ink">{formatCop(o.total)}</td>
+                  <td className="py-2 text-brava-muted">{new Date(o.createdAt).toLocaleDateString("es-CO")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

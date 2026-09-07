@@ -133,63 +133,65 @@ export default function DeliveryZonesPage() {
       {!zones ? (
         <p className="mt-6 text-brava-muted">Cargando…</p>
       ) : (
-        <table className="mt-6 w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-brava-pink-light text-brava-muted">
-              <th className="py-2 font-medium">Zona</th>
-              <th className="py-2 font-medium">Precio (COP)</th>
-              <th className="py-2 font-medium">Activa</th>
-              <th className="py-2 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {zones.map((z) => {
-              const d = drafts[z.id] ?? toDraft(z);
-              return (
-                <tr key={z.id} className="border-b border-brava-pink-light/50">
-                  <td className="py-2 pr-3">
-                    <input
-                      value={d.name}
-                      onChange={(e) => patchDraft(z.id, { name: e.target.value })}
-                      className="w-full rounded-lg border border-brava-pink-light px-2 py-1 text-brava-ink outline-none focus:border-brava-pink"
-                    />
-                  </td>
-                  <td className="py-2 pr-3">
-                    <div className="flex items-center gap-2">
+        <div className="mt-6 overflow-x-auto">
+          <table className="w-full min-w-[480px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-brava-pink-light text-brava-muted">
+                <th className="py-2 font-medium">Zona</th>
+                <th className="py-2 font-medium">Precio (COP)</th>
+                <th className="py-2 font-medium">Activa</th>
+                <th className="py-2 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {zones.map((z) => {
+                const d = drafts[z.id] ?? toDraft(z);
+                return (
+                  <tr key={z.id} className="border-b border-brava-pink-light/50">
+                    <td className="py-2 pr-3">
                       <input
-                        type="number"
-                        min={0}
-                        value={d.price}
-                        onChange={(e) => patchDraft(z.id, { price: e.target.value })}
-                        className="w-28 rounded-lg border border-brava-pink-light px-2 py-1 text-brava-muted outline-none focus:border-brava-pink"
+                        value={d.name}
+                        onChange={(e) => patchDraft(z.id, { name: e.target.value })}
+                        className="w-full rounded-lg border border-brava-pink-light px-2 py-1 text-brava-ink outline-none focus:border-brava-pink"
                       />
-                      <span className="text-xs text-brava-muted">{formatCop(Number(d.price) || 0)}</span>
-                    </div>
-                  </td>
-                  <td className="py-2 pr-3">
-                    <input
-                      type="checkbox"
-                      checked={d.isActive}
-                      onChange={(e) => patchDraft(z.id, { isActive: e.target.checked })}
-                    />
-                  </td>
-                  <td className="py-2">
-                    {isDirty(z) && (
-                      <IconButton
-                        size="sm"
-                        tone="primary"
-                        icon={<FaFloppyDisk aria-hidden />}
-                        label={`Guardar ${z.name}`}
-                        busy={savingId === z.id}
-                        onClick={() => handleSaveZone(z)}
+                    </td>
+                    <td className="py-2 pr-3">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          value={d.price}
+                          onChange={(e) => patchDraft(z.id, { price: e.target.value })}
+                          className="w-28 rounded-lg border border-brava-pink-light px-2 py-1 text-brava-muted outline-none focus:border-brava-pink"
+                        />
+                        <span className="text-xs text-brava-muted">{formatCop(Number(d.price) || 0)}</span>
+                      </div>
+                    </td>
+                    <td className="py-2 pr-3">
+                      <input
+                        type="checkbox"
+                        checked={d.isActive}
+                        onChange={(e) => patchDraft(z.id, { isActive: e.target.checked })}
                       />
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="py-2">
+                      {isDirty(z) && (
+                        <IconButton
+                          size="sm"
+                          tone="primary"
+                          icon={<FaFloppyDisk aria-hidden />}
+                          label={`Guardar ${z.name}`}
+                          busy={savingId === z.id}
+                          onClick={() => handleSaveZone(z)}
+                        />
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <form

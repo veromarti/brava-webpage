@@ -170,26 +170,28 @@ export default function OrderDetailPage() {
       </div>
 
       <h2 className="mt-6 font-medium text-brava-ink">Productos</h2>
-      <table className="mt-2 w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-brava-pink-light text-brava-muted">
-            <th className="py-2 font-medium">Descripción</th>
-            <th className="py-2 font-medium">Cant.</th>
-            <th className="py-2 font-medium">Precio unit.</th>
-            <th className="py-2 font-medium">Subtotal</th>
-          </tr>
-        </thead>
-        <tbody>
-          {order.items.map((item) => (
-            <tr key={item.id} className="border-b border-brava-pink-light/50">
-              <td className="py-2 text-brava-ink">{item.description}</td>
-              <td className="py-2 text-brava-muted">{item.quantity}</td>
-              <td className="py-2 text-brava-muted">{formatCop(item.unitPrice)}</td>
-              <td className="py-2 text-brava-ink">{formatCop(item.lineTotal)}</td>
+      <div className="mt-2 overflow-x-auto">
+        <table className="w-full min-w-[480px] text-left text-sm">
+          <thead>
+            <tr className="border-b border-brava-pink-light text-brava-muted">
+              <th className="py-2 font-medium">Descripción</th>
+              <th className="py-2 font-medium">Cant.</th>
+              <th className="py-2 font-medium">Precio unit.</th>
+              <th className="py-2 font-medium">Subtotal</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {order.items.map((item) => (
+              <tr key={item.id} className="border-b border-brava-pink-light/50">
+                <td className="py-2 text-brava-ink">{item.description}</td>
+                <td className="py-2 text-brava-muted">{item.quantity}</td>
+                <td className="py-2 text-brava-muted">{formatCop(item.unitPrice)}</td>
+                <td className="py-2 text-brava-ink">{formatCop(item.lineTotal)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <div className="mt-4 ml-auto w-full max-w-xs rounded-2xl border border-brava-pink-light p-4 text-sm">
         <div className="flex justify-between">

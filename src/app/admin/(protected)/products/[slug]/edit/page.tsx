@@ -74,7 +74,7 @@ function VariantFieldset({
 }) {
   return (
     <>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-brava-ink">Tono/código</label>
           <input
@@ -497,7 +497,7 @@ export default function EditProductPage() {
             Los saltos de línea se conservan tal cual en la página del producto.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <BrandPicker
             brands={brands}
             value={brandId}
@@ -642,7 +642,8 @@ export default function EditProductPage() {
           al menos una variante activa con precio.
         </p>
       ) : (
-        <table className="mt-4 w-full text-left text-sm">
+        <div className="mt-4 overflow-x-auto">
+        <table className="w-full min-w-[640px] text-left text-sm">
           <thead>
             <tr className="border-b border-brava-pink-light text-brava-muted">
               <th className="py-2 font-medium">Tono/talla</th>
@@ -759,6 +760,7 @@ export default function EditProductPage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       <form
