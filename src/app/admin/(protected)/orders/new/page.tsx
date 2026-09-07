@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   adminCreateOrder,
+  adminGetAdmins,
   adminGetDeliveryZones,
   ApiError,
+  type AdminListItemDto,
   type DeliveryZoneDto,
 } from "@/lib/api-admin";
 import { OrderItemsEditor, toOrderItemPayloads, type OrderItemRow } from "@/components/admin/OrderItemsEditor";
@@ -20,6 +22,8 @@ export default function NewOrderPage() {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryZoneId, setDeliveryZoneId] = useState("");
   const [zones, setZones] = useState<DeliveryZoneDto[]>([]);
+  const [admins, setAdmins] = useState<AdminListItemDto[]>([]);
+  const [createdByAdminId, setCreatedByAdminId] = useState("");
   const [items, setItems] = useState<OrderItemRow[]>([]);
   const [notes, setNotes] = useState("");
 
@@ -30,6 +34,9 @@ export default function NewOrderPage() {
     adminGetDeliveryZones()
       .then((data) => setZones(data.filter((z) => z.isActive)))
       .catch(() => setError("No se pudieron cargar las zonas de envío."));
+    adminGetAdmins()
+      .then(setAdmins)
+      .catch(() => setError("No se pudieron cargar los administradores."));
   }, []);
 
   const zone = zones.find((z) => z.id === deliveryZoneId);
@@ -41,6 +48,10 @@ export default function NewOrderPage() {
     e.preventDefault();
     if (!contactName.trim() || !contactPhone.trim() || !deliveryAddress.trim()) {
       setError("Nombre, teléfono y dirección son obligatorios.");
+      return;
+    }
+    if (!createdByAdminId) {
+      setError("Selecciona qué administrador tomó el pedido.");
       return;
     }
     if (items.length === 0) {
@@ -56,6 +67,7 @@ export default function NewOrderPage() {
         contactPhone: contactPhone.trim(),
         deliveryAddress: deliveryAddress.trim(),
         deliveryZoneId: deliveryZoneId || null,
+        createdByAdminId,
         items: toOrderItemPayloads(items),
         notes: notes.trim() || null,
       });
@@ -101,6 +113,20 @@ export default function NewOrderPage() {
             value={deliveryAddress}
             onChange={(e) => setDeliveryAddress(e.target.value)}
             className="mt-1 w-full rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-brava-ink">¿Quién tomó el pedido?</label>
+          <Select
+            required
+            ariaLabel="Administrador que tomó el pedido"
+            placeholder="Selecciona un administrador"
+            value={createdByAdminId}
+            onValueChange={setCreatedByAdminId}
+            wrapperClassName="mt-1 block w-full sm:inline-block"
+            className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm"
+            options={admins.map((a) => ({ value: a.id, label: a.email }))}
           />
         </div>
 

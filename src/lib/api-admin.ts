@@ -516,6 +516,8 @@ export interface OrderDetailDto {
   total: number;
   notes: string | null;
   createdAt: string;
+  createdByAdminId: string;
+  createdByAdminEmail: string | null;
   items: OrderItemDetailDto[];
 }
 
@@ -530,6 +532,10 @@ export interface CreateOrderPayload {
   contactPhone: string;
   deliveryAddress: string;
   deliveryZoneId: string | null;
+  // Which of the admins actually took/handled this order — picked explicitly
+  // on the create form rather than assumed from whoever is logged in (one
+  // admin often enters an order a colleague took over WhatsApp).
+  createdByAdminId: string;
   items: CreateOrderItemPayload[];
   notes: string | null;
 }
@@ -575,5 +581,60 @@ export async function adminMarkOrderPaid(number: string, paymentMethod: PaymentM
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ paymentMethod }),
   });
+  return res.json();
+}
+
+// --- Admins --------------------------------------------------------------
+
+export interface AdminListItemDto {
+  id: string;
+  email: string;
+}
+
+export async function adminGetAdmins(): Promise<AdminListItemDto[]> {
+  const res = await authedFetch("/api/admins");
+  return res.json();
+}
+
+// --- Metrics (Phase 2) -----------------------------------------------------
+
+export interface CatalogueMetricsDto {
+  totalProducts: number;
+  activeProducts: number;
+  inactiveProducts: number;
+  productsWithoutImages: number;
+  productsWithoutSellableVariant: number;
+  totalActiveVariants: number;
+  outOfStockActiveVariants: number;
+  variantsMissingCost: number;
+  averageMarginPercent: number | null;
+  totalCombos: number;
+  activeCombos: number;
+  combosWithIncompleteCost: number;
+}
+
+export interface OrderMetricsDto {
+  from: string | null;
+  to: string | null;
+  completedOrdersCount: number;
+  revenue: number;
+  deliveryIncome: number;
+  totalIncome: number;
+  cogs: number;
+  grossProfit: number;
+  hasIncompleteCost: boolean;
+}
+
+export async function adminGetCatalogueMetrics(): Promise<CatalogueMetricsDto> {
+  const res = await authedFetch("/api/metrics/catalogue");
+  return res.json();
+}
+
+export async function adminGetOrderMetrics(range?: { from?: string; to?: string }): Promise<OrderMetricsDto> {
+  const params = new URLSearchParams();
+  if (range?.from) params.set("from", range.from);
+  if (range?.to) params.set("to", range.to);
+  const qs = params.toString();
+  const res = await authedFetch(`/api/metrics/orders${qs ? `?${qs}` : ""}`);
   return res.json();
 }

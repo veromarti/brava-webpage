@@ -123,6 +123,9 @@ export default function OrderDetailPage() {
             <p className="mt-2 text-xs text-brava-muted">Vinculado a un cliente registrado.</p>
           )}
           {order.notes && <p className="mt-2 text-sm text-brava-muted">Notas: {order.notes}</p>}
+          {order.createdByAdminEmail && (
+            <p className="mt-2 text-xs text-brava-muted">Tomado por: {order.createdByAdminEmail}</p>
+          )}
         </div>
 
         <div className="rounded-2xl border border-brava-pink-light p-4">
