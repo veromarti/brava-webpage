@@ -119,6 +119,11 @@ export default function OrderDetailPage() {
               Zona: {order.deliveryZoneName} ({formatCop(order.deliveryFee)})
             </p>
           )}
+          {order.packagingOptionName && (
+            <p className="text-sm text-brava-muted">
+              Empaque: {order.packagingOptionName} ({formatCop(order.packagingCost)} · costo interno)
+            </p>
+          )}
           {order.customerId && (
             <p className="mt-2 text-xs text-brava-muted">Vinculado a un cliente registrado.</p>
           )}

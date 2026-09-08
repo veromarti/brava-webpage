@@ -178,10 +178,15 @@ export default function AdminMetricsPage() {
               value={formatCop(orderMetrics.cogs)}
               note={orderMetrics.hasIncompleteCost ? "costo incompleto — algún producto sin costo" : undefined}
             />
+            <Stat label="Costo de empaque" value={formatCop(orderMetrics.packagingCost)} note="bolsas/cajas usadas" />
             <Stat
               label="Utilidad bruta"
               value={formatCop(orderMetrics.grossProfit)}
-              note={orderMetrics.hasIncompleteCost ? "costo incompleto — cifra parcial" : "ingresos por productos − costo"}
+              note={
+                orderMetrics.hasIncompleteCost
+                  ? "costo incompleto — cifra parcial"
+                  : "ingresos por productos − costo de productos − empaque"
+              }
             />
           </div>
         )}

@@ -467,6 +467,45 @@ export async function adminUpdateDeliveryZone(
   return res.json();
 }
 
+// --- Packaging options (Phase 2) ---------------------------------------------
+
+// The bag/box used to pack an order. Price is an internal cost (see
+// Order.PackagingCost on the backend) — never charged to the customer,
+// tracked only for margin metrics. Same admin-managed shape as delivery zones.
+export interface PackagingOptionDto {
+  id: string;
+  name: string;
+  price: number;
+  isActive: boolean;
+}
+
+export async function adminGetPackagingOptions(): Promise<PackagingOptionDto[]> {
+  const res = await authedFetch("/api/packaging-options");
+  return res.json();
+}
+
+// 409 (ApiError with the server message) on a duplicate name.
+export async function adminCreatePackagingOption(name: string, price: number): Promise<PackagingOptionDto> {
+  const res = await authedFetch("/api/packaging-options", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, price }),
+  });
+  return res.json();
+}
+
+export async function adminUpdatePackagingOption(
+  id: string,
+  payload: { name: string; price: number; isActive: boolean },
+): Promise<PackagingOptionDto> {
+  const res = await authedFetch(`/api/packaging-options/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
 // --- Orders (Phase 1) --------------------------------------------------
 
 // The API serializes these with JsonStringEnumConverter — string names over
@@ -512,6 +551,10 @@ export interface OrderDetailDto {
   deliveryZoneId: string | null;
   deliveryZoneName: string | null;
   deliveryFee: number;
+  packagingOptionId: string | null;
+  packagingOptionName: string | null;
+  // Internal cost only — not part of subtotal/total, tracked for margin metrics.
+  packagingCost: number;
   subtotal: number;
   total: number;
   notes: string | null;
@@ -532,6 +575,9 @@ export interface CreateOrderPayload {
   contactPhone: string;
   deliveryAddress: string;
   deliveryZoneId: string | null;
+  // Which bag/box packed the order — an internal cost, never added to the
+  // subtotal/total the customer sees.
+  packagingOptionId: string | null;
   // Which of the admins actually took/handled this order — picked explicitly
   // on the create form rather than assumed from whoever is logged in (one
   // admin often enters an order a colleague took over WhatsApp).
@@ -621,6 +667,9 @@ export interface OrderMetricsDto {
   deliveryIncome: number;
   totalIncome: number;
   cogs: number;
+  // Internal cost (bag/box) — never part of revenue/totalIncome, subtracted
+  // in grossProfit alongside cogs.
+  packagingCost: number;
   grossProfit: number;
   hasIncompleteCost: boolean;
 }

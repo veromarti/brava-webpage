@@ -6,9 +6,11 @@ import {
   adminCreateOrder,
   adminGetAdmins,
   adminGetDeliveryZones,
+  adminGetPackagingOptions,
   ApiError,
   type AdminListItemDto,
   type DeliveryZoneDto,
+  type PackagingOptionDto,
 } from "@/lib/api-admin";
 import { OrderItemsEditor, toOrderItemPayloads, type OrderItemRow } from "@/components/admin/OrderItemsEditor";
 import { formatCop } from "@/lib/format";
@@ -22,6 +24,8 @@ export default function NewOrderPage() {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryZoneId, setDeliveryZoneId] = useState("");
   const [zones, setZones] = useState<DeliveryZoneDto[]>([]);
+  const [packagingOptionId, setPackagingOptionId] = useState("");
+  const [packagingOptions, setPackagingOptions] = useState<PackagingOptionDto[]>([]);
   const [admins, setAdmins] = useState<AdminListItemDto[]>([]);
   const [createdByAdminId, setCreatedByAdminId] = useState("");
   const [items, setItems] = useState<OrderItemRow[]>([]);
@@ -34,6 +38,9 @@ export default function NewOrderPage() {
     adminGetDeliveryZones()
       .then((data) => setZones(data.filter((z) => z.isActive)))
       .catch(() => setError("No se pudieron cargar las zonas de envío."));
+    adminGetPackagingOptions()
+      .then((data) => setPackagingOptions(data.filter((p) => p.isActive)))
+      .catch(() => setError("No se pudieron cargar los empaques."));
     adminGetAdmins()
       .then(setAdmins)
       .catch(() => setError("No se pudieron cargar los administradores."));
@@ -41,6 +48,8 @@ export default function NewOrderPage() {
 
   const zone = zones.find((z) => z.id === deliveryZoneId);
   const deliveryFee = zone?.price ?? 0;
+  const packagingOption = packagingOptions.find((p) => p.id === packagingOptionId);
+  const packagingCost = packagingOption?.price ?? 0;
   const subtotal = items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
   const total = subtotal + deliveryFee;
 
@@ -67,6 +76,7 @@ export default function NewOrderPage() {
         contactPhone: contactPhone.trim(),
         deliveryAddress: deliveryAddress.trim(),
         deliveryZoneId: deliveryZoneId || null,
+        packagingOptionId: packagingOptionId || null,
         createdByAdminId,
         items: toOrderItemPayloads(items),
         notes: notes.trim() || null,
@@ -141,6 +151,23 @@ export default function NewOrderPage() {
             className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm"
             options={zones.map((z) => ({ value: z.id, label: `${z.name} — ${formatCop(z.price)}` }))}
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-brava-ink">Empaque</label>
+          <Select
+            ariaLabel="Empaque"
+            placeholder="Sin empaque"
+            value={packagingOptionId}
+            onValueChange={setPackagingOptionId}
+            wrapperClassName="mt-1 inline-block"
+            className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm"
+            options={packagingOptions.map((p) => ({ value: p.id, label: `${p.name} — ${formatCop(p.price)}` }))}
+          />
+          <p className="mt-1 text-xs text-brava-muted">
+            Costo interno{packagingOption ? `: ${formatCop(packagingCost)}` : ""} — no se suma al total del
+            cliente, solo se usa para el margen en Métricas.
+          </p>
         </div>
 
         <div>
