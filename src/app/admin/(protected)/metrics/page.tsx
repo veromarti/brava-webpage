@@ -1,14 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { FaChevronDown, FaPencil } from "react-icons/fa6";
 import {
   adminGetCatalogueMetrics,
+  adminGetCatalogueHealthDetails,
   adminGetOrderMetrics,
   ApiError,
   type CatalogueMetricsDto,
+  type CatalogueHealthDetailsDto,
   type OrderMetricsDto,
+  type ProductHealthItemDto,
+  type VariantHealthItemDto,
 } from "@/lib/api-admin";
-import { formatCop } from "@/lib/format";
+import { formatCop, variantLabel } from "@/lib/format";
 
 function toDateInputValue(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -33,19 +39,117 @@ function Stat({ label, value, note }: { label: string; value: string; note?: str
   );
 }
 
+// A Stat whose number is a count of *problem* rows: the card is a button, and
+// clicking it expands the list of exactly which products/variants are behind
+// the number so the admin can jump straight to fixing them. Non-expandable
+// (and not a button) when the count is 0 — nothing to drill into — or while
+// the detail list is still loading.
+function HealthCard({
+  label,
+  count,
+  note,
+  ready,
+  open,
+  onToggle,
+  children,
+}: {
+  label: string;
+  count: number;
+  note?: string;
+  ready: boolean;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  const expandable = count > 0 && ready;
+  return (
+    <div className="rounded-2xl border border-brava-pink-light">
+      <button
+        type="button"
+        onClick={onToggle}
+        disabled={!expandable}
+        aria-expanded={expandable ? open : undefined}
+        className="flex w-full items-start justify-between gap-3 rounded-2xl p-4 text-left transition-colors enabled:hover:bg-brava-pink-light/10 disabled:cursor-default"
+      >
+        <span>
+          <span className="block text-sm text-brava-muted">{label}</span>
+          <span className="mt-1 block text-2xl font-bold text-brava-ink">{count}</span>
+          {note && <span className="mt-1 block text-xs text-brava-muted">{note}</span>}
+        </span>
+        {expandable && (
+          <FaChevronDown
+            aria-hidden
+            className={`mt-1 shrink-0 text-brava-muted transition-transform ${open ? "rotate-180" : ""}`}
+          />
+        )}
+      </button>
+      {expandable && open && (
+        <div className="border-t border-brava-pink-light px-4 py-1">{children}</div>
+      )}
+    </div>
+  );
+}
+
+function ProductLinkList({ items }: { items: ProductHealthItemDto[] }) {
+  return (
+    <ul className="divide-y divide-brava-pink-light/60">
+      {items.map((it) => (
+        <li key={it.productId}>
+          <Link
+            href={`/admin/products/${it.slug}/edit`}
+            className="flex items-center justify-between gap-2 py-2 text-sm text-brava-ink hover:text-brava-pink-dark"
+          >
+            <span>{it.name}</span>
+            <FaPencil aria-hidden className="shrink-0 text-brava-muted" />
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function VariantLinkList({ items }: { items: VariantHealthItemDto[] }) {
+  return (
+    <ul className="divide-y divide-brava-pink-light/60">
+      {items.map((it) => (
+        <li key={it.variantId}>
+          <Link
+            href={`/admin/products/${it.productSlug}/edit#variant-${it.variantId}`}
+            className="flex items-center justify-between gap-2 py-2 text-sm text-brava-ink hover:text-brava-pink-dark"
+          >
+            <span>
+              {it.productName}
+              <span className="text-brava-muted"> · {variantLabel(it)}</span>
+            </span>
+            <FaPencil aria-hidden className="shrink-0 text-brava-muted" />
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function AdminMetricsPage() {
   const [catalogue, setCatalogue] = useState<CatalogueMetricsDto | null>(null);
   const [catalogueError, setCatalogueError] = useState<string | null>(null);
+  const [healthDetails, setHealthDetails] = useState<CatalogueHealthDetailsDto | null>(null);
+  const [healthDetailsError, setHealthDetailsError] = useState<string | null>(null);
+  const [openCards, setOpenCards] = useState<Record<string, boolean>>({});
 
   const [from, setFrom] = useState(defaultFrom());
   const [to, setTo] = useState(toDateInputValue(new Date()));
   const [orderMetrics, setOrderMetrics] = useState<OrderMetricsDto | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
 
+  // Summary and drill-down details load independently — a details failure
+  // shouldn't blank the numbers, and vice versa.
   useEffect(() => {
     adminGetCatalogueMetrics()
       .then(setCatalogue)
       .catch((err) => setCatalogueError(err instanceof ApiError ? err.message : "Error al cargar el catálogo."));
+    adminGetCatalogueHealthDetails()
+      .then(setHealthDetails)
+      .catch(() => setHealthDetailsError("No se pudieron cargar los detalles para revisar."));
   }, []);
 
   // Re-fetches whenever the range changes — same "small admin panel, a fresh
@@ -64,68 +168,13 @@ export default function AdminMetricsPage() {
     };
   }, [from, to]);
 
+  const toggleCard = (key: string) => setOpenCards((prev) => ({ ...prev, [key]: !prev[key] }));
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
       <h1 className="text-2xl font-bold text-brava-ink">Métricas</h1>
 
       <section className="mt-8">
-        <h2 className="text-lg font-semibold text-brava-ink">Catálogo</h2>
-        <p className="mt-1 text-sm text-brava-muted">Estado actual — no depende de un rango de fechas.</p>
-
-        {catalogueError && <p className="mt-4 text-sm text-red-600">{catalogueError}</p>}
-
-        {!catalogue ? (
-          <p className="mt-6 text-brava-muted">Cargando…</p>
-        ) : (
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat
-              label="Productos"
-              value={String(catalogue.totalProducts)}
-              note={`${catalogue.activeProducts} activos · ${catalogue.inactiveProducts} inactivos`}
-            />
-            <Stat
-              label="Sin imágenes"
-              value={String(catalogue.productsWithoutImages)}
-              note="productos sin ninguna foto"
-            />
-            <Stat
-              label="Sin nada que vender"
-              value={String(catalogue.productsWithoutSellableVariant)}
-              note="sin variante activa con precio"
-            />
-            <Stat
-              label="Variantes activas"
-              value={String(catalogue.totalActiveVariants)}
-              note={`${catalogue.outOfStockActiveVariants} agotadas`}
-            />
-            <Stat
-              label="Margen promedio"
-              value={
-                catalogue.averageMarginPercent !== null
-                  ? `${catalogue.averageMarginPercent.toFixed(1)}%`
-                  : "—"
-              }
-              note={
-                catalogue.variantsMissingCost > 0
-                  ? `${catalogue.variantsMissingCost} variantes sin costo (costo incompleto)`
-                  : "sobre variantes con costo y precio"
-              }
-            />
-            <Stat
-              label="Kits"
-              value={String(catalogue.totalCombos)}
-              note={`${catalogue.activeCombos} activos`}
-            />
-            <Stat
-              label="Kits con costo incompleto"
-              value={String(catalogue.combosWithIncompleteCost)}
-              note="algún producto del kit sin costo"
-            />
-          </div>
-        )}
-      </section>
-
-      <section className="mt-10 border-t border-brava-pink-light pt-8">
         <h2 className="text-lg font-semibold text-brava-ink">Financiero</h2>
         <p className="mt-1 text-sm text-brava-muted">
           Solo cuenta pedidos <span className="font-medium text-brava-ink">Entregado</span> — un pedido
@@ -189,6 +238,103 @@ export default function AdminMetricsPage() {
               }
             />
           </div>
+        )}
+      </section>
+
+      <section className="mt-10 border-t border-brava-pink-light pt-8">
+        <h2 className="text-lg font-semibold text-brava-ink">Catálogo</h2>
+        <p className="mt-1 text-sm text-brava-muted">Estado actual — no depende de un rango de fechas.</p>
+
+        {catalogueError && <p className="mt-4 text-sm text-red-600">{catalogueError}</p>}
+
+        {!catalogue ? (
+          <p className="mt-6 text-brava-muted">Cargando…</p>
+        ) : (
+          <>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Stat
+                label="Productos"
+                value={String(catalogue.totalProducts)}
+                note={`${catalogue.activeProducts} activos · ${catalogue.inactiveProducts} inactivos`}
+              />
+              <Stat label="Variantes activas" value={String(catalogue.totalActiveVariants)} />
+              <Stat
+                label="Margen promedio"
+                value={
+                  catalogue.averageMarginPercent !== null
+                    ? `${catalogue.averageMarginPercent.toFixed(1)}%`
+                    : "—"
+                }
+                note={
+                  catalogue.variantsMissingCost > 0
+                    ? "cifra parcial — hay variantes sin costo"
+                    : "sobre variantes con costo y precio"
+                }
+              />
+              <Stat
+                label="Kits"
+                value={String(catalogue.totalCombos)}
+                note={`${catalogue.activeCombos} activos`}
+              />
+              <Stat
+                label="Kits con costo incompleto"
+                value={String(catalogue.combosWithIncompleteCost)}
+                note="algún producto del kit sin costo"
+              />
+            </div>
+
+            <div className="mt-8 flex items-baseline gap-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-brava-muted">Para revisar</h3>
+              <p className="text-xs text-brava-muted">Toca una tarjeta para ver cuáles y editarlas.</p>
+            </div>
+            {healthDetailsError && <p className="mt-2 text-sm text-red-600">{healthDetailsError}</p>}
+
+            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <HealthCard
+                label="Sin imágenes"
+                count={catalogue.productsWithoutImages}
+                note="productos sin ninguna foto"
+                ready={healthDetails !== null}
+                open={!!openCards.images}
+                onToggle={() => toggleCard("images")}
+              >
+                {healthDetails && <ProductLinkList items={healthDetails.productsWithoutImages} />}
+              </HealthCard>
+
+              <HealthCard
+                label="Sin nada que vender"
+                count={catalogue.productsWithoutSellableVariant}
+                note="sin variante activa con precio"
+                ready={healthDetails !== null}
+                open={!!openCards.sellable}
+                onToggle={() => toggleCard("sellable")}
+              >
+                {healthDetails && <ProductLinkList items={healthDetails.productsWithoutSellableVariant} />}
+              </HealthCard>
+
+              <HealthCard
+                label="Variantes agotadas"
+                count={catalogue.outOfStockActiveVariants}
+                note="activas, sin stock y sin venta bajo pedido"
+                ready={healthDetails !== null}
+                open={!!openCards.outOfStock}
+                onToggle={() => toggleCard("outOfStock")}
+              >
+                {healthDetails && <VariantLinkList items={healthDetails.outOfStockActiveVariants} />}
+              </HealthCard>
+
+              <HealthCard
+                label="Variantes sin costo"
+                count={catalogue.variantsMissingCost}
+                note="activas y con precio, pero sin costo interno"
+                ready={healthDetails !== null}
+                open={!!openCards.missingCost}
+                onToggle={() => toggleCard("missingCost")}
+              >
+                {healthDetails && <VariantLinkList items={healthDetails.variantsMissingCost} />}
+              </HealthCard>
+            </div>
+          </>
         )}
       </section>
     </div>

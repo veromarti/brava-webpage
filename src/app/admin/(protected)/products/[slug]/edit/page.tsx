@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { FaPencil, FaTrashCan, FaEye, FaEyeSlash, FaFloppyDisk, FaXmark } from "react-icons/fa6";
 import {
@@ -252,6 +252,26 @@ export default function EditProductPage() {
       cancelled = true;
     };
   }, [slug]);
+
+  // Deep link from the /admin/metrics "Para revisar" cards:
+  // /admin/products/<slug>/edit#variant-<id> opens that variant's edit form and
+  // scrolls its row into view. Runs once, after the product first loads — the
+  // ref guard keeps a later reload() (which gives `product` a new reference)
+  // from re-opening the form under the admin.
+  const handledHashRef = useRef(false);
+  useEffect(() => {
+    if (!product || handledHashRef.current) return;
+    const match = window.location.hash.match(/^#variant-(.+)$/);
+    if (!match) return;
+    const target = product.variants.find((v) => v.id === match[1]);
+    if (!target) return;
+    handledHashRef.current = true;
+    startEditVariant(target);
+    // Wait for the edit-form row to render before scrolling to it.
+    requestAnimationFrame(() => {
+      document.getElementById(`variant-${target.id}`)?.scrollIntoView({ block: "center" });
+    });
+  }, [product]);
 
   async function handleSaveProduct(e: React.FormEvent) {
     e.preventDefault();
@@ -656,7 +676,7 @@ export default function EditProductPage() {
           <tbody>
             {product.variants.map((v) => (
               <Fragment key={v.id}>
-                <tr className="border-b border-brava-pink-light/50">
+                <tr id={`variant-${v.id}`} className="scroll-mt-24 border-b border-brava-pink-light/50">
                   <td className="py-2 text-brava-ink">{variantLabel(v)}</td>
                   <td className="py-2 text-brava-muted">
                     {v.sellPrice !== null ? `$${v.sellPrice.toLocaleString("es-CO")}` : "—"}

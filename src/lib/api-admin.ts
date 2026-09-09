@@ -679,6 +679,40 @@ export async function adminGetCatalogueMetrics(): Promise<CatalogueMetricsDto> {
   return res.json();
 }
 
+// The rows behind the four health counts in CatalogueMetricsDto — one list per
+// clickable card on /admin/metrics. Variant rows carry the raw tone/size fields
+// so variantLabel() in lib/format formats them the same as everywhere else.
+export interface ProductHealthItemDto {
+  productId: string;
+  slug: string;
+  name: string;
+}
+
+export interface VariantHealthItemDto {
+  variantId: string;
+  productId: string;
+  productSlug: string;
+  productName: string;
+  toneCode: string | null;
+  toneName: string | null;
+  units: number | null;
+  volumeMl: number | null;
+  massG: number | null;
+  physicalStock: number;
+}
+
+export interface CatalogueHealthDetailsDto {
+  productsWithoutImages: ProductHealthItemDto[];
+  productsWithoutSellableVariant: ProductHealthItemDto[];
+  outOfStockActiveVariants: VariantHealthItemDto[];
+  variantsMissingCost: VariantHealthItemDto[];
+}
+
+export async function adminGetCatalogueHealthDetails(): Promise<CatalogueHealthDetailsDto> {
+  const res = await authedFetch("/api/metrics/catalogue/details");
+  return res.json();
+}
+
 export async function adminGetOrderMetrics(range?: { from?: string; to?: string }): Promise<OrderMetricsDto> {
   const params = new URLSearchParams();
   if (range?.from) params.set("from", range.from);
