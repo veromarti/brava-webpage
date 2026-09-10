@@ -33,6 +33,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...opted in: the deployed API URL is not a secret (NEXT_PUBLIC_* ships to the
+# browser anyway) and CI/Cloudflare builds need it so `vinext build`'s prerender
+# pass can load lib/api.ts, which throws when API_URL is unset.
+!.env.production
 
 # vercel
 .vercel
