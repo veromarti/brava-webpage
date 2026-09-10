@@ -264,3 +264,64 @@ export const getComboBySlugWithImages = unstable_cache(
   ["combo-by-slug-with-images"],
   { revalidate: 60, tags: ["combos", "products"] },
 );
+
+// --- Shared wishlists (gift lists) -------------------------------------------
+// A "Lista de deseos" saved to the API under a short code so it can be shared
+// with friends/family. The browser list (WishlistProvider) still owns the
+// building; this is the persisted, shareable copy.
+
+export interface SharedWishlistItemDto {
+  type: "product" | "combo";
+  slug: string;
+  variantId: string | null;
+  name: string;
+  variantLabel: string | null;
+  imageUrl: string | null;
+  // Price snapshot from when the line was added — the shared page re-resolves
+  // the live price (currentWishlistPrice) and only falls back to this.
+  unitPrice: number;
+  quantity: number;
+}
+
+export interface SharedWishlistDto {
+  code: string;
+  ownerName: string;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: SharedWishlistItemDto[];
+}
+
+// no-store: a list must be readable the instant it's created/updated, and it's
+// cheap. 404 -> null so the page calls notFound() itself.
+export async function getSharedWishlist(code: string): Promise<SharedWishlistDto | null> {
+  const res = await fetch(`${API_URL}/api/wishlists/${encodeURIComponent(code)}`, { cache: "no-store" });
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`GET /api/wishlists/${code} failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+// Current catalog price of a wishlist line, or null when the product/variant/
+// combo behind it is gone or inactive. Shared by the wishlist page's price
+// refresh (/api/wishlist-prices) and the shared gift-list page, so "what's this
+// worth today / is it still available" is decided in exactly one place.
+export async function currentWishlistPrice(
+  type: "product" | "combo",
+  slug: string,
+  variantId: string | null,
+): Promise<number | null> {
+  if (type === "product") {
+    const product = await getProductBySlug(slug);
+    if (!product || !product.isActive) {
+      return null;
+    }
+    const variant = product.variants.find((v) => v.id === variantId);
+    return variant && variant.isActive && variant.sellPrice !== null ? variant.sellPrice : null;
+  }
+  const combo = await getComboBySlug(slug);
+  return combo && combo.isActive ? combo.finalPrice : null;
+}

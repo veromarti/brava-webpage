@@ -1,4 +1,4 @@
-import { getProductBySlug, getComboBySlug } from "@/lib/api";
+import { currentWishlistPrice } from "@/lib/api";
 
 // The wishlist lives in the browser's localStorage and stores each line's
 // unitPrice as it was when the item was added (WishlistProvider). This
@@ -37,18 +37,15 @@ function parseItems(body: unknown): RequestItem[] {
   });
 }
 
-async function currentPrice(item: RequestItem): Promise<number | null> {
-  if (item.type === "product") {
-    const variantId = item.key.startsWith(PRODUCT_KEY_PREFIX)
+// The line's variant id is carried inside its key ("product:{variantId}");
+// combo lines are keyed by slug and have none. currentWishlistPrice does the
+// actual catalog lookup.
+function currentPrice(item: RequestItem): Promise<number | null> {
+  const variantId =
+    item.type === "product" && item.key.startsWith(PRODUCT_KEY_PREFIX)
       ? item.key.slice(PRODUCT_KEY_PREFIX.length)
       : null;
-    const product = await getProductBySlug(item.slug);
-    if (!product || !product.isActive) return null;
-    const variant = product.variants.find((v) => v.id === variantId);
-    return variant && variant.isActive && variant.sellPrice !== null ? variant.sellPrice : null;
-  }
-  const combo = await getComboBySlug(item.slug);
-  return combo && combo.isActive ? combo.finalPrice : null;
+  return currentWishlistPrice(item.type, item.slug, variantId);
 }
 
 export async function POST(request: Request): Promise<Response> {

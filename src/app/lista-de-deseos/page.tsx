@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useWishlist } from "@/components/WishlistProvider";
+import { ShareWishlist } from "@/components/ShareWishlist";
 import { formatCop } from "@/lib/format";
 import { buildWhatsAppWishlistLink } from "@/lib/whatsapp";
 
@@ -178,6 +179,8 @@ export default function WishlistPage() {
               Vaciar lista
             </button>
           </div>
+
+          <ShareWishlist />
         </>
       )}
     </div>
