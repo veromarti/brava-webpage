@@ -1,4 +1,4 @@
-import { forwardWishlistSave, readJsonBody } from "@/lib/wishlist-save";
+import { forwardJson, readJsonBody } from "@/lib/server-proxy";
 
 // POST /api/wishlists — create a shareable gift list.
 // Body: { ownerName, note?, items: [{ type, slug, variantId?, name,
@@ -9,5 +9,5 @@ export async function POST(request: Request): Promise<Response> {
   if ("error" in parsed) {
     return parsed.error;
   }
-  return forwardWishlistSave("POST", "/api/wishlists", parsed.body);
+  return forwardJson("POST", "/api/wishlists", parsed.body);
 }

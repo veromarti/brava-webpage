@@ -72,6 +72,7 @@ export default async function ComboDetailPage({
           </ul>
 
           <ComboOrderForm
+            comboId={combo.id}
             comboSlug={combo.slug}
             comboName={combo.name}
             finalPrice={combo.finalPrice}

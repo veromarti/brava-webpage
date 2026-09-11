@@ -24,6 +24,11 @@ export interface WishlistItem {
   // saved before this field parse fine.
   unitPrice: number;
   quantity: number;
+  // The combo's real database id (type === "combo" only) — needed to place a
+  // real order for it (POST /api/orders needs a ComboId, not just a slug).
+  // Optional so lines saved before this field existed still parse; those
+  // just can't be included in a direct "Pedir por WhatsApp" order.
+  comboId?: string | null;
   // Set by syncPrices() when the product/variant/combo behind this line is
   // gone or inactive — the line stays visible but drops out of the total.
   unavailable?: boolean;
@@ -73,7 +78,8 @@ function parseStoredItems(raw: string): WishlistItem[] {
       typeof it.quantity === "number" &&
       Number.isFinite(it.quantity) &&
       it.quantity >= 1 &&
-      (it.unavailable === undefined || typeof it.unavailable === "boolean")
+      (it.unavailable === undefined || typeof it.unavailable === "boolean") &&
+      (it.comboId === undefined || it.comboId === null || typeof it.comboId === "string")
     );
   });
 }

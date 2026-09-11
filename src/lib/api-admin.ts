@@ -559,7 +559,10 @@ export interface OrderDetailDto {
   total: number;
   notes: string | null;
   createdAt: string;
-  createdByAdminId: string;
+  // Null when the customer created this order themselves from the storefront
+  // ("Pedir por WhatsApp") — createdByAdminEmail is null too until an admin
+  // claims it via adminAssignOrder.
+  createdByAdminId: string | null;
   createdByAdminEmail: string | null;
   items: OrderItemDetailDto[];
 }
@@ -626,6 +629,17 @@ export async function adminMarkOrderPaid(number: string, paymentMethod: PaymentM
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ paymentMethod }),
+  });
+  return res.json();
+}
+
+// Claims/reassigns a customer-created order ("Cliente (WhatsApp)" — no
+// createdByAdminId yet) to one of the admins, once someone follows up on it.
+export async function adminAssignOrder(number: string, adminId: string): Promise<OrderDetailDto> {
+  const res = await authedFetch(`/api/orders/${encodeURIComponent(number)}/admin`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ adminId }),
   });
   return res.json();
 }

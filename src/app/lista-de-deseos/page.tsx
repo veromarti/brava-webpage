@@ -5,8 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useWishlist } from "@/components/WishlistProvider";
 import { ShareWishlist } from "@/components/ShareWishlist";
+import { WhatsAppOrderButton } from "@/components/WhatsAppOrderButton";
 import { formatCop } from "@/lib/format";
-import { buildWhatsAppWishlistLink } from "@/lib/whatsapp";
+
+const PRODUCT_KEY_PREFIX = "product:";
 
 export default function WishlistPage() {
   const { items, loaded, removeItem, updateQuantity, clear, syncPrices } = useWishlist();
@@ -63,6 +65,13 @@ export default function WishlistPage() {
   const total = availableItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const hasPriceChanges = changed.size > 0;
   const hasUnavailable = unavailable.size > 0;
+
+  // A combo line needs its real database id to become an order line
+  // (POST /api/orders), which only lines added after that field existed
+  // carry — see WishlistItem.comboId's comment. Older saved combo lines drop
+  // out of the direct-order button rather than sending a doomed request.
+  const orderableItems = availableItems.filter((item) => item.type === "product" || item.comboId);
+  const hasUnorderable = orderableItems.length < availableItems.length;
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
@@ -160,21 +169,28 @@ export default function WishlistPage() {
             <span className="text-xl font-bold text-brava-pink-dark">{formatCop(total)}</span>
           </div>
 
+          {hasUnorderable && (
+            <p className="mt-4 text-sm text-brava-muted">
+              Algunos kits se agregaron antes de esta actualización y no se pueden incluir en el pedido
+              directo — quítalos y agrégalos de nuevo para incluirlos.
+            </p>
+          )}
+
           <div className="mt-6 flex flex-wrap items-center gap-4">
-            <a
-              href={buildWhatsAppWishlistLink({
-                lines: availableItems.map(
-                  (item) =>
-                    `${item.name}${item.variantLabel ? ` (${item.variantLabel})` : ""} x${item.quantity}`,
-                ),
-                totalLabel: formatCop(total),
-              })}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full bg-brava-pink px-6 py-2.5 font-medium text-white transition-colors hover:bg-brava-pink-dark"
-            >
-              Pedir por WhatsApp
-            </a>
+            {orderableItems.length > 0 && (
+              <WhatsAppOrderButton
+                items={orderableItems.map((item) => ({
+                  productVariantId:
+                    item.type === "product" && item.key.startsWith(PRODUCT_KEY_PREFIX)
+                      ? item.key.slice(PRODUCT_KEY_PREFIX.length)
+                      : null,
+                  comboId: item.type === "combo" ? item.comboId : null,
+                  quantity: item.quantity,
+                  label: `${item.name}${item.variantLabel ? ` (${item.variantLabel})` : ""}`,
+                }))}
+                total={total}
+              />
+            )}
             <button type="button" onClick={clear} className="text-sm text-brava-muted hover:text-red-600">
               Vaciar lista
             </button>

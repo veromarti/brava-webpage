@@ -3,9 +3,9 @@
 import { useState } from "react";
 import type { ProductVariantDto } from "@/lib/api";
 import { formatCop, variantLabel, stockStatus } from "@/lib/format";
-import { buildWhatsAppOrderLink } from "@/lib/whatsapp";
 import { useWishlist } from "@/components/WishlistProvider";
 import { Select } from "@/components/Select";
+import { WhatsAppOrderButton } from "@/components/WhatsAppOrderButton";
 
 // One variant picker + one quantity field + one WhatsApp button, instead of
 // a "Pedir por WhatsApp" repeated on every variant row — the customer picks
@@ -82,18 +82,16 @@ export function ProductOrderForm({
           can't actually be fulfilled right now) is conditional on stock. */}
       <div className="flex flex-wrap items-center gap-3">
         {status.tone !== "out-of-stock" && (
-          <a
-            href={buildWhatsAppOrderLink({
-              productName,
-              variantLabel: variantLabel(selected),
-              quantity,
-            })}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-fit rounded-full bg-brava-pink px-6 py-2.5 font-medium text-white transition-colors hover:bg-brava-pink-dark"
-          >
-            Pedir por WhatsApp
-          </a>
+          <WhatsAppOrderButton
+            items={[
+              {
+                productVariantId: selected.id,
+                quantity,
+                label: `${productName} (${variantLabel(selected)})`,
+              },
+            ]}
+            total={selected.sellPrice! * quantity}
+          />
         )}
         <button
           type="button"

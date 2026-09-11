@@ -1,4 +1,4 @@
-import { forwardWishlistSave, readJsonBody } from "@/lib/wishlist-save";
+import { forwardJson, readJsonBody } from "@/lib/server-proxy";
 
 // PUT /api/wishlists/[code] — full replace of a gift list the creating browser
 // still holds the code for. Same body shape as POST /api/wishlists.
@@ -12,5 +12,5 @@ export async function PUT(
   if ("error" in parsed) {
     return parsed.error;
   }
-  return forwardWishlistSave("PUT", `/api/wishlists/${encodeURIComponent(code)}`, parsed.body);
+  return forwardJson("PUT", `/api/wishlists/${encodeURIComponent(code)}`, parsed.body);
 }
