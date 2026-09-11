@@ -615,6 +615,22 @@ export async function adminCreateOrder(payload: CreateOrderPayload): Promise<Ord
   return res.json();
 }
 
+// Full edit of an order's editable fields — same shape as CreateOrderPayload
+// minus createdByAdminId (adminAssignOrder's job). Backs "Editar pedido": add
+// or remove products, fix the address, or pick a delivery zone/packaging a
+// storefront order didn't have. The API rejects this once the order is
+// Entregado or Cancelado (surfaced as an ApiError with its message).
+export type UpdateOrderPayload = Omit<CreateOrderPayload, "createdByAdminId">;
+
+export async function adminUpdateOrder(number: string, payload: UpdateOrderPayload): Promise<OrderDetailDto> {
+  const res = await authedFetch(`/api/orders/${encodeURIComponent(number)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
 export async function adminUpdateOrderStatus(number: string, status: OrderStatus): Promise<OrderDetailDto> {
   const res = await authedFetch(`/api/orders/${encodeURIComponent(number)}/status`, {
     method: "PUT",

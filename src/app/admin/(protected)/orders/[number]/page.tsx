@@ -138,6 +138,15 @@ export default function OrderDetailPage() {
         </span>
       </div>
 
+      {order.status !== "Entregado" && order.status !== "Cancelado" && (
+        <Link
+          href={`/admin/orders/${order.number}/edit`}
+          className="mt-2 inline-block text-sm font-medium text-brava-pink-dark hover:underline"
+        >
+          Editar pedido (agregar o quitar productos, corregir datos)
+        </Link>
+      )}
+
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
       <div className="mt-6 grid gap-6 sm:grid-cols-2">
