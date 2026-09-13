@@ -1,4 +1,4 @@
-// Responsive `sizes` for the catalog grid images, derived from CatalogGrid's
+// Responsive `sizes` for the catalog grid images, derived from Catalog's
 // column classes: grid-cols-1 -> min-[480px]:2 -> md:3 -> xl:4, inside a
 // max-w-6xl (72rem) px-6 container, gap-5 (1.25rem) between cells. At the xl
 // breakpoint the container is capped, so each of the 4 cells is a fixed

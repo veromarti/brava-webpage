@@ -64,3 +64,30 @@ body {
 select {
   accent-color: var(--brava-pink);
 }
+
+/* StickerBanner (src/components/StickerBanner.tsx): the track renders the
+   sticker set twice back-to-back and slides exactly one set-width left, so
+   the moment it snaps back to 0 the on-screen content is identical — a
+   seamless loop with no JS-driven scroll position to manage. */
+@keyframes sticker-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.sticker-banner-track {
+  animation: sticker-marquee var(--sticker-banner-duration, 30s) linear infinite;
+}
+
+.sticker-banner:hover .sticker-banner-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticker-banner-track {
+    animation-duration: calc(var(--sticker-banner-duration, 30s) * 6);
+  }
+}
