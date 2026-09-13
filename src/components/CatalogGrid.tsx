@@ -8,6 +8,10 @@ import { Select } from "@/components/Select";
 
 type SortKey = "suggested" | "price-asc" | "price-desc" | "name";
 
+// Gift cards are a promo item, not a regular browsing category — always
+// surface them up front (next to the kits) instead of mixed into the grid.
+const BONO_CATEGORY = "bono de regalo";
+
 // Brand/category filtering stays server-side and URL-driven (see
 // CatalogFilters). This adds the lighter-weight, instant refinements —
 // free-text search and sort — over the already-fetched result set, so
@@ -46,6 +50,15 @@ export function CatalogGrid({
     return list;
   }, [products, q, sort]);
 
+  const visibleBonos = useMemo(
+    () => visibleProducts.filter((p) => p.categoryName.toLowerCase() === BONO_CATEGORY),
+    [visibleProducts],
+  );
+  const visibleOtherProducts = useMemo(
+    () => visibleProducts.filter((p) => p.categoryName.toLowerCase() !== BONO_CATEGORY),
+    [visibleProducts],
+  );
+
   const total = visibleCombos.length + visibleProducts.length;
 
   return (
@@ -81,10 +94,13 @@ export function CatalogGrid({
         <p className="mt-10 text-brava-muted">No encontramos nada con esa búsqueda.</p>
       ) : (
         <div className="mt-4 grid grid-cols-1 gap-5 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+          {visibleBonos.map((product) => (
+            <ProductCard key={product.slug} product={product} />
+          ))}
           {visibleCombos.map((combo) => (
             <ComboCard key={`combo-${combo.slug}`} combo={combo} />
           ))}
-          {visibleProducts.map((product) => (
+          {visibleOtherProducts.map((product) => (
             <ProductCard key={product.slug} product={product} />
           ))}
         </div>

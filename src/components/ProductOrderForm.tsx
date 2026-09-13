@@ -112,7 +112,7 @@ export function ProductOrderForm({
           }}
           className="text-sm font-medium text-brava-pink-dark hover:underline"
         >
-          {added ? "Agregado ✓" : "Agregar a lista de deseos"}
+          {added ? "Agregado ✓" : "Agregar al carrito"}
         </button>
       </div>
     </div>

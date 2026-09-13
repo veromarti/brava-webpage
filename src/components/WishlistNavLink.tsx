@@ -9,7 +9,7 @@ export function WishlistNavLink() {
 
   return (
     <Link href="/lista-de-deseos" className="text-sm font-medium text-brava-ink hover:text-brava-pink-dark">
-      Lista de deseos{count > 0 && ` (${count})`}
+      Carrito{count > 0 && ` (${count})`}
     </Link>
   );
 }
