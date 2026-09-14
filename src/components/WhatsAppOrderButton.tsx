@@ -34,6 +34,8 @@ export function WhatsAppOrderButton({
   label,
   giftFor,
   notes,
+  markGiftedWishlistCode,
+  markGiftedItemIds,
   className,
 }: {
   items: WhatsAppOrderLine[];
@@ -45,6 +47,12 @@ export function WhatsAppOrderButton({
   // before asking about delivery.
   giftFor?: string;
   notes?: string | null;
+  // Shared gift-list page only: once the order is created, mark these lines
+  // of that wishlist as gifted (PUT /api/wishlists/{code}/gift) so a later
+  // visitor sees them as already taken. Best-effort — awaited before the
+  // WhatsApp handoff, but a failure here never blocks it.
+  markGiftedWishlistCode?: string;
+  markGiftedItemIds?: string[];
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -118,6 +126,20 @@ export function WhatsAppOrderButton({
         address: trimmedAddress,
         giftFor,
       });
+
+      if (markGiftedWishlistCode && markGiftedItemIds && markGiftedItemIds.length > 0) {
+        try {
+          await fetch(`/api/wishlists/${encodeURIComponent(markGiftedWishlistCode)}/gift`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ itemIds: markGiftedItemIds }),
+          });
+        } catch {
+          // Best-effort: the order already exists either way, so a hiccup
+          // here shouldn't stop the customer from reaching WhatsApp.
+        }
+      }
+
       // Same-tab navigation, not window.open: fires immediately with no
       // popup-blocker risk (a new tab opened from inside an async
       // continuation can get silently blocked in some browsers).

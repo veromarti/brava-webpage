@@ -271,6 +271,9 @@ export const getComboBySlugWithImages = unstable_cache(
 // building; this is the persisted, shareable copy.
 
 export interface SharedWishlistItemDto {
+  // The line's own id — needed to mark it gifted (PUT /api/wishlists/{code}/gift)
+  // once someone actually buys it, so a later visitor sees it's taken.
+  id: string;
   type: "product" | "combo";
   slug: string;
   variantId: string | null;
@@ -281,6 +284,10 @@ export interface SharedWishlistItemDto {
   // the live price (currentWishlistPrice) and only falls back to this.
   unitPrice: number;
   quantity: number;
+  // Set once someone has completed an order for this line from the gift
+  // page — it's shown as already taken and excluded from the total,
+  // regardless of live price/availability.
+  isGifted: boolean;
 }
 
 export interface SharedWishlistDto {
