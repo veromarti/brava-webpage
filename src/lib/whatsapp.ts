@@ -8,11 +8,13 @@ export function buildWhatsAppContactLink(): string {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-// "Pedir por WhatsApp" (product page, combo page, wishlist page), sent only
-// after WhatsAppOrderButton has actually created the Pendiente order via
-// POST /api/orders — so the message includes the real order number and the
-// contact details already on file, instead of the customer retyping them
-// into the chat. One line per item, a total, then the contact block.
+// "Pedir por WhatsApp" (product/combo/wishlist pages) and "Regalar esto" /
+// "Regalar todo" (shared gift-list page), sent only after WhatsAppOrderButton
+// has actually created the Pendiente order via POST /api/orders — so the
+// message includes the real order number, every item, and the contact
+// details already on file, instead of the customer retyping them into the
+// chat. giftFor names the wishlist owner when this order came from someone
+// else's shared list, so BRAVA knows it's a gift before asking about delivery.
 export function buildWhatsAppOrderConfirmationLink(params: {
   orderNumber: string;
   lines: string[];
@@ -20,10 +22,14 @@ export function buildWhatsAppOrderConfirmationLink(params: {
   name: string;
   phone: string;
   address: string;
+  giftFor?: string;
 }): string {
   const numbered = params.lines.map((line, i) => `${i + 1}. ${line}`).join("\n");
+  const intro = params.giftFor
+    ? `Hola BRAVA, quiero confirmar mi pedido ${params.orderNumber} — es un regalo para ${params.giftFor}:`
+    : `Hola BRAVA, quiero confirmar mi pedido ${params.orderNumber}:`;
   const message =
-    `Hola BRAVA, quiero confirmar mi pedido ${params.orderNumber}:\n${numbered}\n\n` +
+    `${intro}\n${numbered}\n\n` +
     `Total estimado: ${params.totalLabel}\n\n` +
     `Nombre: ${params.name}\nTeléfono: ${params.phone}\nDirección: ${params.address}`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
@@ -36,20 +42,4 @@ export function buildWhatsAppOrderConfirmationLink(params: {
 export function buildWhatsAppShareMyListLink(params: { url: string }): string {
   const message = `Te comparto mi lista de deseos de BRAVA 💕 Así sabes qué me encantaría de regalo:\n${params.url}`;
   return `https://wa.me/?text=${encodeURIComponent(message)}`;
-}
-
-// A gift-giver messaging BRAVA to buy from someone's shared list — same
-// wa.me-to-BRAVA deep link as the order builders. itemLabel is one line
-// ("Labial Mate (Rojo) x1") when they picked a single item, or null to ask
-// about the whole list.
-export function buildWhatsAppGiftLink(params: {
-  ownerName: string;
-  itemLabel: string | null;
-  url: string;
-}): string {
-  const what = params.itemLabel
-    ? `quiero regalar esto de la lista de deseos de ${params.ownerName}: ${params.itemLabel}.`
-    : `quiero regalar algo de la lista de deseos de ${params.ownerName}.`;
-  const message = `Hola BRAVA, ${what}\nLista: ${params.url}`;
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }

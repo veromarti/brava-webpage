@@ -16,15 +16,27 @@ export interface WhatsAppOrderLine {
 // Pendiente order first (POST /api/orders — see api/orders/route.ts), so it
 // shows up in the admin panel immediately, then hands off to WhatsApp with
 // the order number and the customer's own contact details already in the
-// message. One component, used on the product page, the combo page, and the
-// wishlist page — only `items`/`total` change per call site.
+// message. One component, used on the product page, the combo page, the
+// wishlist page, and the shared gift-list page ("Regalar esto"/"Regalar
+// todo") — only `items`/`total`/`label` (and `giftFor`/`notes` for the gift
+// page) change per call site.
 export function WhatsAppOrderButton({
   items,
   total,
+  label,
+  giftFor,
+  notes,
   className,
 }: {
   items: WhatsAppOrderLine[];
   total: number;
+  // Idle button text — defaults to "Pedir por WhatsApp".
+  label?: string;
+  // Wishlist owner's name, when this order comes from someone else's shared
+  // gift list — included in the WhatsApp message so BRAVA knows it's a gift
+  // before asking about delivery.
+  giftFor?: string;
+  notes?: string | null;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -65,7 +77,7 @@ export function WhatsAppOrderButton({
             comboId: i.comboId ?? null,
             quantity: i.quantity,
           })),
-          notes: null,
+          notes: notes ?? null,
         }),
       });
 
@@ -90,6 +102,7 @@ export function WhatsAppOrderButton({
         name: trimmedName,
         phone: trimmedPhone,
         address: trimmedAddress,
+        giftFor,
       });
       setResult({ number, url });
     } catch {
@@ -118,7 +131,7 @@ export function WhatsAppOrderButton({
   if (!open) {
     return (
       <button type="button" onClick={() => setOpen(true)} className={buttonClassName}>
-        Pedir por WhatsApp
+        {label ?? "Pedir por WhatsApp"}
       </button>
     );
   }
