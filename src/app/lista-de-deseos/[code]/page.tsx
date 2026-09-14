@@ -92,65 +92,70 @@ export default async function SharedWishlistPage({ params }: Params) {
         </p>
       )}
 
-      <ul className="mt-8 flex flex-col gap-3">
+      {/* Grid, not a stacked list: every card gets the same footprint (grid
+          rows stretch items to equal height) regardless of how long a name
+          runs, and "Regalar esto" always lands in the same spot at the
+          bottom (mt-auto), below the image and info — never squeezed beside
+          them like a long name used to do in a single row. */}
+      <ul className="mt-8 grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3">
         {lines.map((line) => (
           <li
             key={`${line.slug}:${line.variantId ?? ""}`}
-            className={`flex flex-wrap items-center gap-4 rounded-xl border border-brava-pink-light p-4 ${
+            className={`flex flex-col overflow-hidden rounded-2xl border border-brava-pink-light bg-white ${
               line.unavailable ? "opacity-60" : ""
             }`}
           >
             <Link
               href={detailHref(line)}
-              className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-brava-pink-light"
+              className="relative aspect-square overflow-hidden bg-brava-pink-light"
             >
               {line.imageUrl ? (
                 <Image
                   src={line.imageUrl}
                   alt={line.name}
-                  width={64}
-                  height={64}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 33vw"
+                  className="object-cover"
                 />
               ) : (
-                <span className="px-1 text-center text-[10px] leading-tight text-brava-ink">
+                <div className="flex h-full w-full items-center justify-center p-3 text-center text-sm text-brava-ink">
                   {line.name}
-                </span>
+                </div>
               )}
             </Link>
 
-            <div className="min-w-0 flex-1">
+            <div className="flex flex-1 flex-col gap-1 p-4">
               <Link
                 href={detailHref(line)}
-                className="font-medium text-brava-ink hover:text-brava-pink-dark"
+                className="line-clamp-2 font-medium leading-snug text-brava-ink hover:text-brava-pink-dark"
               >
                 {line.name}
                 {line.type === "combo" && " (kit)"}
               </Link>
-              {line.variantLabel && <p className="text-sm text-brava-muted">{line.variantLabel}</p>}
-              <p className="text-sm font-semibold text-brava-pink-dark">
-                {formatCop(line.price)}
-                <span className="ml-2 font-normal text-brava-muted">Cantidad: {line.quantity}</span>
-                {line.unavailable && (
-                  <span className="ml-2 font-normal text-red-600">ya no disponible</span>
-                )}
-              </p>
-            </div>
+              {line.variantLabel && (
+                <p className="line-clamp-1 text-sm text-brava-muted">{line.variantLabel}</p>
+              )}
+              <p className="text-sm font-semibold text-brava-pink-dark">{formatCop(line.price)}</p>
+              <p className="text-xs text-brava-muted">Cantidad: {line.quantity}</p>
+              {line.unavailable && (
+                <p className="text-xs font-medium text-red-600">Ya no disponible</p>
+              )}
 
-            {!line.unavailable && (
-              <a
-                href={buildWhatsAppGiftLink({
-                  ownerName: wishlist.ownerName,
-                  itemLabel: giftLabel(line),
-                  url: listUrl,
-                })}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full border border-brava-pink px-4 py-2 text-sm font-medium text-brava-pink-dark transition-colors hover:bg-brava-pink hover:text-white"
-              >
-                Regalar esto
-              </a>
-            )}
+              {!line.unavailable && (
+                <a
+                  href={buildWhatsAppGiftLink({
+                    ownerName: wishlist.ownerName,
+                    itemLabel: giftLabel(line),
+                    url: listUrl,
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-auto block rounded-full border border-brava-pink px-4 py-2 text-center text-sm font-medium text-brava-pink-dark transition-colors hover:bg-brava-pink hover:text-white"
+                >
+                  Regalar esto
+                </a>
+              )}
+            </div>
           </li>
         ))}
       </ul>
