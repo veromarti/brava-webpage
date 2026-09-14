@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { buildWhatsAppOrderConfirmationLink } from "@/lib/whatsapp";
 import { formatCop } from "@/lib/format";
 
@@ -13,13 +14,20 @@ export interface WhatsAppOrderLine {
 }
 
 // Replaces the old plain wa.me link: "Pedir por WhatsApp" now creates a real
-// Pendiente order first (POST /api/orders — see api/orders/route.ts), so it
-// shows up in the admin panel immediately, then hands off to WhatsApp with
-// the order number and the customer's own contact details already in the
-// message. One component, used on the product page, the combo page, the
-// wishlist page, and the shared gift-list page ("Regalar esto"/"Regalar
-// todo") — only `items`/`total`/`label` (and `giftFor`/`notes` for the gift
-// page) change per call site.
+// Pendiente order first (POST /api/orders — see api/orders/route.ts), then
+// hands off to WhatsApp with the order number and the customer's own contact
+// details already in the message. One component, used on the product page,
+// the combo page, the wishlist page, and the shared gift-list page ("Regalar
+// esto"/"Regalar todo") — only `items`/`total`/`label` (and `giftFor`/`notes`
+// for the gift page) change per call site.
+//
+// The form is a modal (via createPortal to document.body), not inline in the
+// card: on a page listing several items (the wishlist, the gift list) an
+// inline form let every card open its own at once. A portal always renders
+// as a fixed, full-viewport overlay regardless of where in the tree this
+// component sits, and its backdrop blocks clicks on every other button while
+// open — so only one can ever be open at a time, with no extra state needed
+// to enforce it.
 export function WhatsAppOrderButton({
   items,
   total,
@@ -45,10 +53,15 @@ export function WhatsAppOrderButton({
   const [address, setAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ number: string; url: string } | null>(null);
 
   const buttonClassName =
     className ?? "w-fit rounded-full bg-brava-pink px-6 py-2.5 font-medium text-white transition-colors hover:bg-brava-pink-dark";
+
+  function closeModal() {
+    if (submitting) return; // an in-flight submit shouldn't be cancellable by a stray backdrop click
+    setOpen(false);
+    setError(null);
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -91,6 +104,7 @@ export function WhatsAppOrderButton({
           // plain-string error body from the API — use as-is
         }
         setError(message || "No se pudo crear el pedido. Intenta de nuevo.");
+        setSubmitting(false);
         return;
       }
 
@@ -104,83 +118,87 @@ export function WhatsAppOrderButton({
         address: trimmedAddress,
         giftFor,
       });
-      setResult({ number, url });
+      // Same-tab navigation, not window.open: fires immediately with no
+      // popup-blocker risk (a new tab opened from inside an async
+      // continuation can get silently blocked in some browsers).
+      window.location.href = url;
     } catch {
       setError("No hay conexión. Intenta de nuevo.");
-    } finally {
       setSubmitting(false);
     }
   }
 
-  // Success state: a plain <a target="_blank"> link (not window.open) so the
-  // customer clicks through themselves — no popup-blocker surprises, and the
-  // same pattern as every other WhatsApp CTA in the app.
-  if (result) {
-    return (
-      <div className="flex flex-col gap-2">
-        <p className="text-sm text-brava-ink">
-          Pedido {result.number} creado ✓ Continúa en WhatsApp para confirmarlo.
-        </p>
-        <a href={result.url} target="_blank" rel="noopener noreferrer" className={buttonClassName}>
-          Continuar en WhatsApp
-        </a>
-      </div>
-    );
-  }
-
-  if (!open) {
-    return (
+  return (
+    <>
       <button type="button" onClick={() => setOpen(true)} className={buttonClassName}>
         {label ?? "Pedir por WhatsApp"}
       </button>
-    );
-  }
 
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex w-full max-w-sm flex-col gap-2 rounded-xl border border-brava-pink-light bg-white p-4"
-    >
-      <p className="text-sm font-medium text-brava-ink">Datos para tu pedido</p>
-      <p className="text-sm text-brava-muted">Total estimado: {formatCop(total)}</p>
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Nombre"
-        className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm outline-none focus:border-brava-pink"
-      />
-      <input
-        type="tel"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="Teléfono"
-        className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm outline-none focus:border-brava-pink"
-      />
-      <input
-        type="text"
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder="Dirección de entrega"
-        className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm outline-none focus:border-brava-pink"
-      />
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded-full bg-brava-pink px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-brava-pink-dark disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {submitting ? "Enviando…" : "Confirmar pedido"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="text-sm text-brava-muted hover:text-red-600"
-        >
-          Cancelar
-        </button>
-      </div>
-    </form>
+      {open &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            onClick={closeModal}
+          >
+            <form
+              onSubmit={handleSubmit}
+              onClick={(e) => e.stopPropagation()}
+              className="flex w-full max-w-sm flex-col gap-3 rounded-2xl bg-white p-6 shadow-xl"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-base font-medium text-brava-ink">Datos para tu pedido</p>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  aria-label="Cerrar"
+                  className="text-brava-muted hover:text-brava-ink"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-sm text-brava-muted">Total estimado: {formatCop(total)}</p>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Nombre"
+                className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm outline-none focus:border-brava-pink"
+              />
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Teléfono"
+                className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm outline-none focus:border-brava-pink"
+              />
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Dirección de entrega"
+                className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm outline-none focus:border-brava-pink"
+              />
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <div className="mt-1 flex items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-full bg-brava-pink px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-brava-pink-dark disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {submitting ? "Enviando…" : "Confirmar pedido"}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="text-sm text-brava-muted hover:text-red-600"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
