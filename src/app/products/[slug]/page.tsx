@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getProductBySlug, mainImageUrl } from "@/lib/api";
 import { ProductImageCarousel } from "@/components/ProductImageCarousel";
 import { ProductOrderForm } from "@/components/ProductOrderForm";
+import { BackToCatalogLink } from "@/components/BackToCatalogLink";
 
 // See the same directive on the home page (src/app/page.tsx) for why.
 export const dynamic = "force-dynamic";
@@ -25,6 +26,9 @@ export default async function ProductDetailPage({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
+      <div className="mb-6">
+        <BackToCatalogLink />
+      </div>
       <div className="grid gap-8 sm:grid-cols-2">
         <ProductImageCarousel key={product.slug} images={product.images} productName={product.name} />
 

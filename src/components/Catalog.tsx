@@ -114,6 +114,10 @@ export function Catalog({
   }
 
   const hasFilters = Boolean(currentCategory) || currentBrands.length > 0 || kitsOnly;
+  // Gift cards/kits only jump the queue on the true default view — no filter,
+  // no explicit sort. The moment the visitor filters or picks a sort, results
+  // should order strictly by that criteria instead.
+  const isDefaultView = sort === "suggested" && !hasFilters;
   const orderedCategories = [...categories].sort((a, b) => a.displayOrder - b.displayOrder);
 
   const currentCategoryName = categories.find((c) => c.slug === currentCategory)?.name ?? null;
@@ -147,9 +151,12 @@ export function Catalog({
   }, [combos, showCombos, q]);
 
   const displayItems = useMemo((): DisplayItem[] => {
-    if (sort === "suggested") {
+    if (isDefaultView) {
       // Gift cards and kits are the "what should I get" answer for someone
-      // just browsing — surface them before the rest of the grid.
+      // just browsing with nothing narrowed down yet — surface them before
+      // the rest of the grid. The instant a filter or sort is applied, this
+      // stops (see the branch below) so results order strictly by that
+      // criteria instead.
       const giftCards = filteredProducts.filter(isGiftCard);
       const rest = filteredProducts.filter((p) => !isGiftCard(p));
       return [
@@ -175,7 +182,7 @@ export function Catalog({
       ...sortedCombos.map((data): DisplayItem => ({ kind: "combo", data })),
       ...sortedProducts.map((data): DisplayItem => ({ kind: "product", data })),
     ];
-  }, [filteredProducts, filteredCombos, sort]);
+  }, [filteredProducts, filteredCombos, sort, isDefaultView]);
 
   const total = displayItems.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));

@@ -3,6 +3,7 @@ import { getComboBySlugWithImages } from "@/lib/api";
 import { formatCop, variantLabel } from "@/lib/format";
 import { ComboOrderForm } from "@/components/ComboOrderForm";
 import { ProductImageCarousel } from "@/components/ProductImageCarousel";
+import { BackToCatalogLink } from "@/components/BackToCatalogLink";
 
 // See the same directive on the home page (src/app/page.tsx) for why.
 export const dynamic = "force-dynamic";
@@ -34,6 +35,9 @@ export default async function ComboDetailPage({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
+      <div className="mb-6">
+        <BackToCatalogLink />
+      </div>
       <div className="grid gap-8 sm:grid-cols-2">
         <div className="relative">
           <span className="absolute left-3 top-3 z-10 rounded-full bg-brava-pink px-3 py-1 text-xs font-medium text-white">
