@@ -1,15 +1,3 @@
-<<<<<<< HEAD
-import { getProductBySlug, getComboBySlug } from "@/lib/api";
-
-// The catalog grid only has the thin list DTOs (name/price range/image) —
-// no variant ids, no combo id — so a card's "quick add"/"quick view" needs
-// one more lookup before it can build a cart line. lib/api.ts is server-only
-// (API_URL isn't public — see its top-of-file comment), so that lookup has
-// to happen here, same reasoning as /api/wishlist-prices.
-//
-// Request:  { type: "product" | "combo", slug }
-// Response: ProductDetailDto | ComboDetailDto | { error } (404 if inactive/missing)
-=======
 import { getProductBySlug, getComboBySlugWithImages } from "@/lib/api";
 
 // The catalog grid only has the thin list DTOs (name/price range/image) —
@@ -25,7 +13,6 @@ import { getProductBySlug, getComboBySlugWithImages } from "@/lib/api";
 //
 // Request:  { type: "product" | "combo", slug }
 // Response: ProductDetailDto | ComboDetailWithImagesDto | { error } (404 if inactive/missing)
->>>>>>> 819cc89 (feat: quick-add and quick-view on catalog cards)
 export async function POST(request: Request): Promise<Response> {
   let body: unknown;
   try {
@@ -47,11 +34,7 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json(product);
   }
 
-<<<<<<< HEAD
-  const combo = await getComboBySlug(slug);
-=======
   const combo = await getComboBySlugWithImages(slug);
->>>>>>> 819cc89 (feat: quick-add and quick-view on catalog cards)
   if (!combo || !combo.isActive) {
     return Response.json({ error: "Kit no encontrado." }, { status: 404 });
   }

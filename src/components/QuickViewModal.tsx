@@ -2,29 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-<<<<<<< HEAD
-import Image from "next/image";
-import Link from "next/link";
-import type { ProductDetailDto, ComboDetailDto } from "@/lib/api";
-import { fetchCatalogItem } from "@/lib/catalogItemClient";
-import { pickMainImage } from "@/lib/format";
-import { ProductOrderForm } from "@/components/ProductOrderForm";
-import { ComboOrderForm } from "@/components/ComboOrderForm";
-=======
 import Link from "next/link";
 import type { ProductDetailDto, ComboDetailWithImagesDto, ImageDto } from "@/lib/api";
 import { fetchCatalogItem } from "@/lib/catalogItemClient";
 import { ProductOrderForm } from "@/components/ProductOrderForm";
 import { ComboOrderForm } from "@/components/ComboOrderForm";
 import { ProductImageCarousel } from "@/components/ProductImageCarousel";
->>>>>>> 819cc89 (feat: quick-add and quick-view on catalog cards)
 
 type Target =
   | { type: "product"; slug: string }
   | { type: "combo"; slug: string };
 
-<<<<<<< HEAD
-=======
 // A kit's gallery comes back as {url, altText} pairs (see
 // getComboBySlugWithImages) — reshaped as ImageDto so ProductImageCarousel
 // can render it unchanged, same trick the combo detail page itself uses.
@@ -38,26 +26,16 @@ function comboCarouselImages(combo: ComboDetailWithImagesDto): ImageDto[] {
   }));
 }
 
->>>>>>> 819cc89 (feat: quick-add and quick-view on catalog cards)
 // The catalog-glance modal a card's "quick view" (eye icon) opens — same
 // portal/backdrop pattern as WhatsAppOrderButton's modal, so only one
 // overlay can ever be open at a time. Deliberately thin: it fetches the full
 // detail on open (the catalog grid only has the thin list DTOs) and then
-<<<<<<< HEAD
-// just renders the exact same ProductOrderForm/ComboOrderForm the detail
-// page uses, so "add to cart"/"pedir por WhatsApp" behave identically
-// wherever they're triggered from — no separate quick-view-only logic to
-// keep in sync.
-export function QuickViewModal({ target, onClose }: { target: Target; onClose: () => void }) {
-  const [detail, setDetail] = useState<ProductDetailDto | ComboDetailDto | "error" | null>(null);
-=======
 // just renders the same ProductImageCarousel and ProductOrderForm/
 // ComboOrderForm the detail page uses, so both the gallery and "add to
 // cart"/"pedir por WhatsApp" behave identically wherever they're triggered
 // from — no separate quick-view-only logic to keep in sync.
 export function QuickViewModal({ target, onClose }: { target: Target; onClose: () => void }) {
   const [detail, setDetail] = useState<ProductDetailDto | ComboDetailWithImagesDto | "error" | null>(null);
->>>>>>> 819cc89 (feat: quick-add and quick-view on catalog cards)
 
   useEffect(() => {
     let cancelled = false;
@@ -74,14 +52,6 @@ export function QuickViewModal({ target, onClose }: { target: Target; onClose: (
   }, [target.type, target.slug]);
 
   const detailHref = target.type === "product" ? `/products/${target.slug}` : `/combos/${target.slug}`;
-<<<<<<< HEAD
-  const imageUrl =
-    detail && detail !== "error"
-      ? target.type === "product"
-        ? pickMainImage((detail as ProductDetailDto).images)
-        : (detail as ComboDetailDto).imageUrl
-      : null;
-=======
 
   const carouselImages: ImageDto[] =
     detail && detail !== "error"
@@ -92,7 +62,6 @@ export function QuickViewModal({ target, onClose }: { target: Target; onClose: (
   // ComboOrderForm/ProductOrderForm only use this for the wishlist line's
   // static thumbnail, not for display — the carousel above is the real photo.
   const thumbnailUrl = carouselImages[0]?.url ?? null;
->>>>>>> 819cc89 (feat: quick-add and quick-view on catalog cards)
 
   return createPortal(
     <div
@@ -101,11 +70,7 @@ export function QuickViewModal({ target, onClose }: { target: Target; onClose: (
     >
       <div
         onClick={(e) => e.stopPropagation()}
-<<<<<<< HEAD
-        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
-=======
         className="flex max-h-[90vh] w-full max-w-xl flex-col overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
->>>>>>> 819cc89 (feat: quick-add and quick-view on catalog cards)
       >
         <div className="flex items-start justify-between gap-3">
           <p className="text-base font-medium text-brava-ink">Vista rápida</p>
@@ -138,29 +103,6 @@ export function QuickViewModal({ target, onClose }: { target: Target; onClose: (
 
         {detail !== null && detail !== "error" && (
           <div className="mt-4 flex flex-col gap-4">
-<<<<<<< HEAD
-            <div className="flex gap-4">
-              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-brava-pink-light">
-                {imageUrl ? (
-                  <Image src={imageUrl} alt={detail.name} fill sizes="96px" className="object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center p-1 text-center text-[10px] text-brava-ink">
-                    {detail.name}
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0">
-                {target.type === "product" && (
-                  <p className="text-xs uppercase tracking-wide text-brava-muted">
-                    {(detail as ProductDetailDto).brandName}
-                  </p>
-                )}
-                <h2 className="font-medium leading-snug text-brava-ink">{detail.name}</h2>
-                {target.type === "product" && (
-                  <p className="text-xs text-brava-muted">{(detail as ProductDetailDto).categoryName}</p>
-                )}
-              </div>
-=======
             <ProductImageCarousel
               key={`${target.type}-${target.slug}`}
               images={carouselImages}
@@ -177,35 +119,22 @@ export function QuickViewModal({ target, onClose }: { target: Target; onClose: (
               {target.type === "product" && (
                 <p className="text-xs text-brava-muted">{(detail as ProductDetailDto).categoryName}</p>
               )}
->>>>>>> 819cc89 (feat: quick-add and quick-view on catalog cards)
             </div>
 
             {target.type === "product" ? (
               <ProductOrderForm
                 productSlug={target.slug}
                 productName={detail.name}
-<<<<<<< HEAD
-                imageUrl={imageUrl}
-=======
                 imageUrl={thumbnailUrl}
->>>>>>> 819cc89 (feat: quick-add and quick-view on catalog cards)
                 variants={(detail as ProductDetailDto).variants}
               />
             ) : (
               <ComboOrderForm
-<<<<<<< HEAD
-                comboId={(detail as ComboDetailDto).id}
-                comboSlug={target.slug}
-                comboName={detail.name}
-                finalPrice={(detail as ComboDetailDto).finalPrice}
-                imageUrl={imageUrl}
-=======
                 comboId={(detail as ComboDetailWithImagesDto).id}
                 comboSlug={target.slug}
                 comboName={detail.name}
                 finalPrice={(detail as ComboDetailWithImagesDto).finalPrice}
                 imageUrl={thumbnailUrl}
->>>>>>> 819cc89 (feat: quick-add and quick-view on catalog cards)
               />
             )}
 

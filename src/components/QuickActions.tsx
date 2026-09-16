@@ -67,14 +67,10 @@ export function QuickActions({
             comboId: combo.id,
             name: combo.name,
             variantLabel: null,
-<<<<<<< HEAD
-            imageUrl: combo.imageUrl,
-=======
             // Same fallback the combo detail page uses (ComboOrderForm's
             // imageUrl prop) — a kit rarely has its own photo, so this is
             // usually a member product's main image, not combo.imageUrl.
             imageUrl: combo.galleryImages[0]?.url ?? null,
->>>>>>> 819cc89 (feat: quick-add and quick-view on catalog cards)
             unitPrice: combo.finalPrice,
           },
           1,
