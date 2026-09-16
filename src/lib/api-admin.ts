@@ -74,6 +74,39 @@ export async function adminGetProducts(): Promise<AdminProductListItemDto[]> {
   return res.json();
 }
 
+// --- Catalogue CSV import/export ------------------------------------------
+// One row per variant (Stock/CostPrice/SellPrice live there, not on the
+// product). Optimizes filling in the cost prices most variants are still
+// missing (see the catalogue-health metrics) — export, edit offline in a
+// spreadsheet, re-upload. Only Stock/PrecioCosto/PrecioVenta are editable via
+// the re-upload; the other columns are read-only context and get ignored.
+
+// Returns the raw file bytes — the caller turns it into a real download via
+// an object URL, since a plain <a href> can't carry the Authorization header
+// this endpoint needs.
+export async function adminExportCatalogue(): Promise<Blob> {
+  const res = await authedFetch("/api/products/export");
+  return res.blob();
+}
+
+export interface ImportCatalogueRowError {
+  row: number;
+  variantId: string | null;
+  message: string;
+}
+
+export interface ImportCatalogueResult {
+  updatedCount: number;
+  errors: ImportCatalogueRowError[];
+}
+
+export async function adminImportCatalogue(file: File): Promise<ImportCatalogueResult> {
+  const form = new FormData();
+  form.append("File", file);
+  const res = await authedFetch("/api/products/import", { method: "POST", body: form });
+  return res.json();
+}
+
 export interface CreateProductPayload {
   name: string;
   description: string;
