@@ -74,9 +74,13 @@ export default async function SharedWishlistPage({ params }: Params) {
     }),
   );
 
-  const available = lines.filter((l) => !l.unavailable);
+  // Already-gifted lines drop out the same way an unavailable one does — a
+  // later visitor shouldn't be able to buy (or count toward the total)
+  // something someone already bought.
+  const available = lines.filter((l) => !l.unavailable && !l.isGifted);
   const total = available.reduce((sum, l) => sum + l.price * l.quantity, 0);
   const hasUnavailable = lines.some((l) => l.unavailable);
+  const hasGifted = lines.some((l) => l.isGifted);
   const giftNotes = `Regalo de la lista de deseos de ${wishlist.ownerName} (código ${wishlist.code}).`;
 
   return (
@@ -97,9 +101,10 @@ export default async function SharedWishlistPage({ params }: Params) {
         </p>
       )}
 
-      {hasUnavailable && (
+      {(hasUnavailable || hasGifted) && (
         <p className="mt-6 rounded-xl border border-brava-pink-light bg-white px-4 py-3 text-sm text-brava-muted">
-          Los productos marcados como no disponibles no se incluyen en el total.
+          {hasGifted && "Los productos ya regalados no se incluyen en el total. "}
+          {hasUnavailable && "Los productos marcados como no disponibles no se incluyen en el total."}
         </p>
       )}
 
@@ -109,9 +114,9 @@ export default async function SharedWishlistPage({ params }: Params) {
       <ul className="mt-8 grid grid-cols-2 gap-3">
         {lines.map((line) => (
           <li
-            key={`${line.slug}:${line.variantId ?? ""}`}
+            key={line.id}
             className={`flex h-full flex-col rounded-xl border border-brava-pink-light bg-white p-3 ${
-              line.unavailable ? "opacity-60" : ""
+              line.unavailable || line.isGifted ? "opacity-60" : ""
             }`}
           >
             <div className="flex items-start gap-3">
@@ -151,7 +156,9 @@ export default async function SharedWishlistPage({ params }: Params) {
             </div>
 
             <div className="mt-auto pt-3">
-              {line.unavailable ? (
+              {line.isGifted ? (
+                <p className="text-xs font-medium text-brava-pink-dark">🎁 Ya fue regalado</p>
+              ) : line.unavailable ? (
                 <p className="text-xs font-medium text-red-600">Ya no disponible</p>
               ) : (
                 <WhatsAppOrderButton
@@ -167,6 +174,8 @@ export default async function SharedWishlistPage({ params }: Params) {
                   label="Regalar esto"
                   giftFor={wishlist.ownerName}
                   notes={giftNotes}
+                  markGiftedWishlistCode={wishlist.code}
+                  markGiftedItemIds={[line.id]}
                   className="block w-full rounded-full border border-brava-pink px-4 py-2 text-center text-sm font-medium text-brava-pink-dark transition-colors hover:bg-brava-pink hover:text-white"
                 />
               )}
@@ -193,6 +202,8 @@ export default async function SharedWishlistPage({ params }: Params) {
             label="Regalar todo"
             giftFor={wishlist.ownerName}
             notes={giftNotes}
+            markGiftedWishlistCode={wishlist.code}
+            markGiftedItemIds={available.map((line) => line.id)}
             className="rounded-full bg-brava-pink px-6 py-2.5 font-medium text-white transition-colors hover:bg-brava-pink-dark"
           />
         )}
