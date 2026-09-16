@@ -274,6 +274,12 @@ export default function OrderDetailPage() {
           <span className="text-brava-muted">Envío</span>
           <span className="text-brava-ink">{formatCop(order.deliveryFee)}</span>
         </div>
+        {order.discountAmount > 0 && (
+          <div className="flex justify-between">
+            <span className="text-brava-muted">Descuento</span>
+            <span className="text-red-600">-{formatCop(order.discountAmount)}</span>
+          </div>
+        )}
         <div className="mt-2 flex justify-between border-t border-brava-pink-light pt-2 font-semibold">
           <span className="text-brava-ink">Total</span>
           <span className="text-brava-pink-dark">{formatCop(order.total)}</span>

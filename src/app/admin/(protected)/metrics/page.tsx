@@ -219,7 +219,12 @@ export default function AdminMetricsPage() {
         ) : (
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Stat label="Pedidos completados" value={String(orderMetrics.completedOrdersCount)} />
-            <Stat label="Ingresos por productos" value={formatCop(orderMetrics.revenue)} />
+            <Stat
+              label="Ingresos por productos"
+              value={formatCop(orderMetrics.revenue)}
+              note="ya descontados los descuentos aplicados"
+            />
+            <Stat label="Descuentos otorgados" value={formatCop(orderMetrics.totalDiscounts)} />
             <Stat label="Ingresos por envío" value={formatCop(orderMetrics.deliveryIncome)} />
             <Stat label="Ingreso total" value={formatCop(orderMetrics.totalIncome)} />
             <Stat
