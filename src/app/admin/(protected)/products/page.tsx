@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FaPencil, FaEyeSlash } from "react-icons/fa6";
-import { adminGetProducts, adminDeactivateProduct, AdminProductListItemDto, ApiError } from "@/lib/api-admin";
+import {
+  adminGetProducts,
+  adminDeactivateProduct,
+  adminExportCatalogue,
+  adminImportCatalogue,
+  AdminProductListItemDto,
+  ApiError,
+  type ImportCatalogueResult,
+} from "@/lib/api-admin";
 import { Select } from "@/components/Select";
 import { IconButton } from "@/components/admin/IconButton";
 
@@ -12,6 +20,10 @@ export default function AdminProductsPage() {
   const [deactivatingSlug, setDeactivatingSlug] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportCatalogueResult | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Local filtering, not a URL/backend round trip — the admin list is
   // already fully loaded (including inactive products, unlike the public
@@ -70,10 +82,105 @@ export default function AdminProductsPage() {
     }
   }
 
+  async function handleExport() {
+    setExporting(true);
+    setError(null);
+    try {
+      const blob = await adminExportCatalogue();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `catalogo-brava-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error al exportar el catálogo.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleImportFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    // Cleared unconditionally so picking the same filename twice in a row
+    // (e.g. after fixing a row and re-saving) still fires this handler.
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (!file) return;
+
+    setImporting(true);
+    setError(null);
+    setImportResult(null);
+    try {
+      const result = await adminImportCatalogue(file);
+      setImportResult(result);
+      await reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error al importar el archivo.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="text-2xl font-bold text-brava-ink">Productos</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-brava-ink">Productos</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={exporting}
+            className="rounded-full border border-brava-pink-light px-4 py-2 text-sm text-brava-ink hover:border-brava-pink disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {exporting ? "Exportando…" : "Exportar catálogo (CSV)"}
+          </button>
+          <label
+            className={`rounded-full border border-brava-pink-light px-4 py-2 text-sm text-brava-ink hover:border-brava-pink ${
+              importing ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+            }`}
+          >
+            {importing ? "Importando…" : "Importar catálogo (CSV)"}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              onChange={handleImportFileChange}
+              disabled={importing}
+              className="hidden"
+            />
+          </label>
+        </div>
+      </div>
+      <p className="mt-1 text-sm text-brava-muted">
+        El CSV exportado tiene una fila por variante. Solo Stock, PrecioCosto y PrecioVenta se actualizan al
+        volver a subirlo — el resto de columnas son de referencia.
+      </p>
+
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+
+      {importResult && (
+        <div className="mt-4 rounded-xl border border-brava-pink-light bg-white p-4 text-sm">
+          <p className="font-medium text-brava-ink">
+            {importResult.updatedCount} variante{importResult.updatedCount === 1 ? "" : "s"} actualizada
+            {importResult.updatedCount === 1 ? "" : "s"}.
+          </p>
+          {importResult.errors.length > 0 && (
+            <>
+              <p className="mt-2 font-medium text-red-600">
+                {importResult.errors.length} fila{importResult.errors.length === 1 ? "" : "s"} con error:
+              </p>
+              <ul className="mt-1 max-h-48 list-disc space-y-1 overflow-auto pl-5 text-brava-muted">
+                {importResult.errors.map((e, i) => (
+                  <li key={i}>
+                    Fila {e.row}
+                    {e.variantId ? ` (${e.variantId})` : ""}: {e.message}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
 
       {!products ? (
         <p className="mt-6 text-brava-muted">Cargando…</p>
