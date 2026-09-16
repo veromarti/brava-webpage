@@ -62,3 +62,13 @@ export function stockStatus(variant: { physicalStock: number; availableOnDemand:
   }
   return { label: "Agotado", tone: "out-of-stock" };
 }
+
+// Same "lowest DisplayOrder wins" rule as lib/api.ts's mainImageUrl, but
+// pure/client-safe (lib/api.ts throws if imported outside a Server Component
+// — see its top-of-file comment) so the quick-view modal can use it too.
+export function pickMainImage(images: { url: string; displayOrder: number }[]): string | null {
+  if (images.length === 0) {
+    return null;
+  }
+  return [...images].sort((a, b) => a.displayOrder - b.displayOrder)[0].url;
+}

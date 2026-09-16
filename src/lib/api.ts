@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { pickMainImage } from "@/lib/format";
 
 // Server-only: every call here runs in a Server Component, never the
 // browser (ADR-0005: server-rendered pages). That's also why this is
@@ -175,10 +176,7 @@ export async function getComboBySlug(slug: string): Promise<ComboDetailDto | nul
 // ProductImageCarousel shows first. Returns null when the product has no
 // images (or the product itself couldn't be loaded).
 export function mainImageUrl(product: ProductDetailDto | null): string | null {
-  if (!product || product.images.length === 0) {
-    return null;
-  }
-  return [...product.images].sort((a, b) => a.displayOrder - b.displayOrder)[0].url;
+  return product ? pickMainImage(product.images) : null;
 }
 
 export interface ComboListItemWithImagesDto extends ComboListItemDto {

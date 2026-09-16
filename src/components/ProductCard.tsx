@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ProductListItemDto } from "@/lib/api";
 import { formatPriceRange } from "@/lib/format";
 import { CATALOG_CARD_SIZES } from "@/components/catalogImageSizes";
+import { QuickActions } from "@/components/QuickActions";
 
 export function ProductCard({ product }: { product: ProductListItemDto }) {
   return (
@@ -34,6 +35,7 @@ export function ProductCard({ product }: { product: ProductListItemDto }) {
         >
           {product.inStock ? "Disponible" : "Agotado"}
         </span>
+        <QuickActions type="product" slug={product.slug} name={product.name} />
       </div>
       <div className="flex flex-1 flex-col gap-1 p-4">
         <p className="text-xs uppercase tracking-wide text-brava-muted">{product.brandName}</p>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ComboListItemWithImagesDto } from "@/lib/api";
 import { formatCop } from "@/lib/format";
 import { KitCollage } from "@/components/KitCollage";
+import { QuickActions } from "@/components/QuickActions";
 
 export function ComboCard({ combo }: { combo: ComboListItemWithImagesDto }) {
   const hasDiscount = combo.finalPrice !== combo.originalPrice;
@@ -22,6 +23,7 @@ export function ComboCard({ combo }: { combo: ComboListItemWithImagesDto }) {
           Kit
         </span>
         <KitCollage images={images} name={combo.name} />
+        <QuickActions type="combo" slug={combo.slug} name={combo.name} />
       </div>
       <div className="flex flex-1 flex-col gap-1 p-4">
         <h3 className="font-medium leading-snug text-brava-ink group-hover:text-brava-pink-dark">
