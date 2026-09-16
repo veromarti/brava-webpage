@@ -556,6 +556,9 @@ export interface OrderDetailDto {
   // Internal cost only — not part of subtotal/total, tracked for margin metrics.
   packagingCost: number;
   subtotal: number;
+  // Flat, admin-applied discount in whole COP — never set by the
+  // storefront's own checkout. Subtotal + deliveryFee - discountAmount = total.
+  discountAmount: number;
   total: number;
   notes: string | null;
   createdAt: string;
@@ -587,6 +590,9 @@ export interface CreateOrderPayload {
   createdByAdminId: string;
   items: CreateOrderItemPayload[];
   notes: string | null;
+  // Flat discount in whole COP — an admin-only concern, capped server-side
+  // at subtotal + delivery fee. null/omitted means no discount.
+  discountAmount: number | null;
 }
 
 export async function adminGetOrders(filters?: {
@@ -693,9 +699,13 @@ export interface OrderMetricsDto {
   from: string | null;
   to: string | null;
   completedOrdersCount: number;
+  // Net of discounts — what was actually charged for the products, not the
+  // pre-discount line total.
   revenue: number;
   deliveryIncome: number;
   totalIncome: number;
+  // Sum of discountAmount across counted orders — how much was given away.
+  totalDiscounts: number;
   cogs: number;
   // Internal cost (bag/box) — never part of revenue/totalIncome, subtracted
   // in grossProfit alongside cogs.

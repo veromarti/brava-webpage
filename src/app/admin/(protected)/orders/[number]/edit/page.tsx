@@ -35,6 +35,7 @@ export default function EditOrderPage() {
   const [packagingOptions, setPackagingOptions] = useState<PackagingOptionDto[]>([]);
   const [items, setItems] = useState<OrderItemRow[]>([]);
   const [notes, setNotes] = useState("");
+  const [discountText, setDiscountText] = useState("");
 
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -50,6 +51,7 @@ export default function EditOrderPage() {
         setDeliveryZoneId(order.deliveryZoneId ?? "");
         setPackagingOptionId(order.packagingOptionId ?? "");
         setNotes(order.notes ?? "");
+        setDiscountText(order.discountAmount > 0 ? String(order.discountAmount) : "");
         setItems(
           order.items.map((i) => ({
             key: i.id,
@@ -81,7 +83,8 @@ export default function EditOrderPage() {
   const packagingOption = packagingOptions.find((p) => p.id === packagingOptionId);
   const packagingCost = packagingOption?.price ?? 0;
   const subtotal = items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
-  const total = subtotal + deliveryFee;
+  const discountAmount = Math.min(Math.max(0, Number(discountText) || 0), subtotal + deliveryFee);
+  const total = subtotal + deliveryFee - discountAmount;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -105,6 +108,7 @@ export default function EditOrderPage() {
         packagingOptionId: packagingOptionId || null,
         items: toOrderItemPayloads(items),
         notes: notes.trim() || null,
+        discountAmount: discountAmount > 0 ? discountAmount : null,
       });
       router.push(`/admin/orders/${number}`);
     } catch (err) {
@@ -202,6 +206,22 @@ export default function EditOrderPage() {
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-brava-ink">Descuento (opcional)</label>
+          <input
+            type="number"
+            min={0}
+            max={subtotal + deliveryFee}
+            value={discountText}
+            onChange={(e) => setDiscountText(e.target.value)}
+            placeholder="0"
+            className="mt-1 w-40 rounded-lg border border-brava-pink-light px-3 py-2 outline-none focus:border-brava-pink"
+          />
+          <p className="mt-1 text-xs text-brava-muted">
+            Monto fijo en pesos, no un porcentaje — se resta del subtotal más envío.
+          </p>
+        </div>
+
+        <div>
           <label className="block text-sm font-medium text-brava-ink">Notas (opcional)</label>
           <textarea
             value={notes}
@@ -220,6 +240,12 @@ export default function EditOrderPage() {
             <span className="text-brava-muted">Envío</span>
             <span className="text-brava-ink">{formatCop(deliveryFee)}</span>
           </div>
+          {discountAmount > 0 && (
+            <div className="flex justify-between">
+              <span className="text-brava-muted">Descuento</span>
+              <span className="text-red-600">-{formatCop(discountAmount)}</span>
+            </div>
+          )}
           <div className="mt-2 flex justify-between border-t border-brava-pink-light pt-2 font-semibold">
             <span className="text-brava-ink">Total</span>
             <span className="text-brava-pink-dark">{formatCop(total)}</span>
