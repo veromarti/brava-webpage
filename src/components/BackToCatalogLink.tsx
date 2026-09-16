@@ -27,7 +27,7 @@ export function BackToCatalogLink({ className }: { className?: string }) {
         "inline-flex items-center gap-1 text-sm text-brava-muted hover:text-brava-pink-dark hover:underline"
       }
     >
-      <span aria-hidden="true">←</span> Volver al catálogo
+      <span aria-hidden="true">←</span> Volver
     </Link>
   );
 }

@@ -114,10 +114,13 @@ export function Catalog({
   }
 
   const hasFilters = Boolean(currentCategory) || currentBrands.length > 0 || kitsOnly;
-  // Gift cards/kits only jump the queue on the true default view — no filter,
-  // no explicit sort. The moment the visitor filters or picks a sort, results
-  // should order strictly by that criteria instead.
-  const isDefaultView = sort === "suggested" && !hasFilters;
+  // Gift cards/kits only jump the queue on the true default view — no
+  // category/brand/kits filter, no search text, no explicit sort. The moment
+  // any of those narrows the results, they should order strictly by that
+  // criteria instead. query is local state (not part of hasFilters, which
+  // only tracks the URL params driving "Limpiar filtros"), so it's checked
+  // separately here.
+  const isDefaultView = sort === "suggested" && !hasFilters && query.trim().length === 0;
   const orderedCategories = [...categories].sort((a, b) => a.displayOrder - b.displayOrder);
 
   const currentCategoryName = categories.find((c) => c.slug === currentCategory)?.name ?? null;
@@ -166,22 +169,27 @@ export function Catalog({
       ];
     }
 
-    const sortedCombos = [...filteredCombos];
-    const sortedProducts = [...filteredProducts];
-    if (sort === "price-asc") {
-      sortedCombos.sort((a, b) => a.finalPrice - b.finalPrice);
-      sortedProducts.sort((a, b) => a.priceFrom - b.priceFrom);
-    } else if (sort === "price-desc") {
-      sortedCombos.sort((a, b) => b.finalPrice - a.finalPrice);
-      sortedProducts.sort((a, b) => b.priceFrom - a.priceFrom);
-    } else if (sort === "name") {
-      sortedCombos.sort((a, b) => a.name.localeCompare(b.name, "es"));
-      sortedProducts.sort((a, b) => a.name.localeCompare(b.name, "es"));
-    }
-    return [
-      ...sortedCombos.map((data): DisplayItem => ({ kind: "combo", data })),
-      ...sortedProducts.map((data): DisplayItem => ({ kind: "product", data })),
+    // Outside the default view, kits get no placement privilege at all — not
+    // "first as a group" either. Combos and products go into one pool and
+    // get sorted together by the same criteria, so a price sort genuinely
+    // interleaves a cheap kit before an expensive product and vice versa.
+    const combined: DisplayItem[] = [
+      ...filteredCombos.map((data): DisplayItem => ({ kind: "combo", data })),
+      ...filteredProducts.map((data): DisplayItem => ({ kind: "product", data })),
     ];
+    const priceOf = (item: DisplayItem) => (item.kind === "combo" ? item.data.finalPrice : item.data.priceFrom);
+
+    if (sort === "price-asc") {
+      combined.sort((a, b) => priceOf(a) - priceOf(b));
+    } else if (sort === "price-desc") {
+      combined.sort((a, b) => priceOf(b) - priceOf(a));
+    } else {
+      // "name" sort, or "suggested" while a filter/search narrows the
+      // results — alphabetical is a stable, unbiased fallback that doesn't
+      // silently default back to "kits first".
+      combined.sort((a, b) => a.data.name.localeCompare(b.data.name, "es"));
+    }
+    return combined;
   }, [filteredProducts, filteredCombos, sort, isDefaultView]);
 
   const total = displayItems.length;
