@@ -596,8 +596,10 @@ export interface OrderDetailDto {
   notes: string | null;
   createdAt: string;
   // Null when the customer created this order themselves from the storefront
-  // ("Pedir por WhatsApp") — createdByAdminEmail is null too until an admin
-  // claims it via adminAssignOrder.
+  // ("Pedir por WhatsApp") and no one has assigned it yet (adminAssignOrderSeller).
+  // createdByAdminId/createdByAdminEmail are historical only — orders created
+  // before Seller existed have those instead; new orders never do.
+  seller: string | null;
   createdByAdminId: string | null;
   createdByAdminEmail: string | null;
   items: OrderItemDetailDto[];
@@ -609,6 +611,12 @@ export interface CreateOrderItemPayload {
   quantity: number;
 }
 
+// The fixed list of people who sell for BRAVA — plain attribution, not a
+// login account (see the backend's Order.Seller doc comment). Keep this in
+// sync with the API's OrderEndpoints.AllowedSellers.
+export const SELLERS = ["Karen", "Julieta", "Veronica"] as const;
+export type Seller = (typeof SELLERS)[number];
+
 export interface CreateOrderPayload {
   contactName: string;
   contactPhone: string;
@@ -617,10 +625,10 @@ export interface CreateOrderPayload {
   // Which bag/box packed the order — an internal cost, never added to the
   // subtotal/total the customer sees.
   packagingOptionId: string | null;
-  // Which of the admins actually took/handled this order — picked explicitly
-  // on the create form rather than assumed from whoever is logged in (one
-  // admin often enters an order a colleague took over WhatsApp).
-  createdByAdminId: string;
+  // Who actually took/sold this order — picked explicitly on the create form
+  // rather than assumed from whoever is logged in (one seller often enters
+  // an order a colleague took over WhatsApp). Must be one of SELLERS.
+  seller: string;
   items: CreateOrderItemPayload[];
   notes: string | null;
   // Flat discount in whole COP — an admin-only concern, capped server-side
@@ -655,11 +663,11 @@ export async function adminCreateOrder(payload: CreateOrderPayload): Promise<Ord
 }
 
 // Full edit of an order's editable fields — same shape as CreateOrderPayload
-// minus createdByAdminId (adminAssignOrder's job). Backs "Editar pedido": add
+// minus seller (adminAssignOrderSeller's job). Backs "Editar pedido": add
 // or remove products, fix the address, or pick a delivery zone/packaging a
 // storefront order didn't have. The API rejects this once the order is
 // Entregado or Cancelado (surfaced as an ApiError with its message).
-export type UpdateOrderPayload = Omit<CreateOrderPayload, "createdByAdminId">;
+export type UpdateOrderPayload = Omit<CreateOrderPayload, "seller">;
 
 export async function adminUpdateOrder(number: string, payload: UpdateOrderPayload): Promise<OrderDetailDto> {
   const res = await authedFetch(`/api/orders/${encodeURIComponent(number)}`, {
@@ -689,12 +697,12 @@ export async function adminMarkOrderPaid(number: string, paymentMethod: PaymentM
 }
 
 // Claims/reassigns a customer-created order ("Cliente (WhatsApp)" — no
-// createdByAdminId yet) to one of the admins, once someone follows up on it.
-export async function adminAssignOrder(number: string, adminId: string): Promise<OrderDetailDto> {
-  const res = await authedFetch(`/api/orders/${encodeURIComponent(number)}/admin`, {
+// seller yet) to one of SELLERS, once someone follows up on it.
+export async function adminAssignOrderSeller(number: string, seller: string): Promise<OrderDetailDto> {
+  const res = await authedFetch(`/api/orders/${encodeURIComponent(number)}/seller`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ adminId }),
+    body: JSON.stringify({ seller }),
   });
   return res.json();
 }

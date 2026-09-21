@@ -9,6 +9,15 @@ export function formatCop(amount: number): string {
   return copFormatter.format(amount);
 }
 
+// Accent/case-insensitive so typing "pestanina" still matches "Pestañina" —
+// most people don't bother with accents when they're just filtering a list.
+// Shared by Select's search box and any plain text-search filter (e.g. the
+// admin products page).
+const DIACRITICS_RE = /[̀-ͯ]/g;
+export function normalizeForSearch(s: string): string {
+  return s.normalize("NFD").replace(DIACRITICS_RE, "").toLowerCase();
+}
+
 // ADR-0003: "Desde $X" only when a product's active variants have different
 // prices; a plain "$X" when they don't. PriceFrom === PriceTo means show one.
 export function formatPriceRange(priceFrom: number, priceTo: number): string {

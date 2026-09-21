@@ -13,6 +13,7 @@ import {
 } from "@/lib/api-admin";
 import { Select } from "@/components/Select";
 import { IconButton } from "@/components/admin/IconButton";
+import { normalizeForSearch } from "@/lib/format";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProductListItemDto[] | null>(null);
@@ -20,6 +21,7 @@ export default function AdminProductsPage() {
   const [deactivatingSlug, setDeactivatingSlug] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [query, setQuery] = useState("");
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportCatalogueResult | null>(null);
@@ -36,8 +38,12 @@ export default function AdminProductsPage() {
     () => [...new Set((products ?? []).map((p) => p.categoryName))].sort(),
     [products],
   );
+  const q = normalizeForSearch(query.trim());
   const filteredProducts = (products ?? []).filter(
-    (p) => (!brandFilter || p.brandName === brandFilter) && (!categoryFilter || p.categoryName === categoryFilter),
+    (p) =>
+      (!brandFilter || p.brandName === brandFilter) &&
+      (!categoryFilter || p.categoryName === categoryFilter) &&
+      (!q || normalizeForSearch(p.name).includes(q) || normalizeForSearch(p.brandName).includes(q)),
   );
 
   async function reload() {
@@ -187,6 +193,13 @@ export default function AdminProductsPage() {
       ) : (
         <>
           <div className="mt-6 flex flex-wrap items-center gap-3">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nombre o marca…"
+              className="w-full rounded-lg border border-brava-pink-light px-3 py-2 text-sm outline-none focus:border-brava-pink sm:w-64"
+            />
             <Select
               ariaLabel="Filtrar por marca"
               value={brandFilter}
@@ -209,12 +222,13 @@ export default function AdminProductsPage() {
                 ...categoryNames.map((name) => ({ value: name, label: name })),
               ]}
             />
-            {(brandFilter || categoryFilter) && (
+            {(brandFilter || categoryFilter || query) && (
               <button
                 type="button"
                 onClick={() => {
                   setBrandFilter("");
                   setCategoryFilter("");
+                  setQuery("");
                 }}
                 className="text-sm text-brava-muted hover:text-brava-pink-dark"
               >

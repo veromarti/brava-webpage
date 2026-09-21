@@ -16,9 +16,9 @@ import { OrderItemsEditor, toOrderItemPayloads, type OrderItemRow } from "@/comp
 import { formatCop } from "@/lib/format";
 import { Select } from "@/components/Select";
 
-// Same form as "Nuevo pedido", minus the admin picker (that's
-// adminAssignOrder's job — see the order detail page) — pre-filled from the
-// existing order so an admin can add/remove products, fix the address, or
+// Same form as "Nuevo pedido", minus the seller picker (that's
+// adminAssignOrderSeller's job — see the order detail page) — pre-filled from
+// the existing order so an admin can add/remove products, fix the address, or
 // pick a delivery zone/packaging once they've followed up with the customer
 // over WhatsApp. The API refuses this once the order is Entregado/Cancelado.
 export default function EditOrderPage() {

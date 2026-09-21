@@ -4,11 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   adminCreateOrder,
-  adminGetAdmins,
   adminGetDeliveryZones,
   adminGetPackagingOptions,
   ApiError,
-  type AdminListItemDto,
+  SELLERS,
   type DeliveryZoneDto,
   type PackagingOptionDto,
 } from "@/lib/api-admin";
@@ -26,8 +25,7 @@ export default function NewOrderPage() {
   const [zones, setZones] = useState<DeliveryZoneDto[]>([]);
   const [packagingOptionId, setPackagingOptionId] = useState("");
   const [packagingOptions, setPackagingOptions] = useState<PackagingOptionDto[]>([]);
-  const [admins, setAdmins] = useState<AdminListItemDto[]>([]);
-  const [createdByAdminId, setCreatedByAdminId] = useState("");
+  const [seller, setSeller] = useState("");
   const [items, setItems] = useState<OrderItemRow[]>([]);
   const [notes, setNotes] = useState("");
   const [discountText, setDiscountText] = useState("");
@@ -42,9 +40,6 @@ export default function NewOrderPage() {
     adminGetPackagingOptions()
       .then((data) => setPackagingOptions(data.filter((p) => p.isActive)))
       .catch(() => setError("No se pudieron cargar los empaques."));
-    adminGetAdmins()
-      .then(setAdmins)
-      .catch(() => setError("No se pudieron cargar los administradores."));
   }, []);
 
   const zone = zones.find((z) => z.id === deliveryZoneId);
@@ -61,8 +56,8 @@ export default function NewOrderPage() {
       setError("Nombre, teléfono y dirección son obligatorios.");
       return;
     }
-    if (!createdByAdminId) {
-      setError("Selecciona qué administrador tomó el pedido.");
+    if (!seller) {
+      setError("Selecciona quién tomó el pedido.");
       return;
     }
     if (items.length === 0) {
@@ -79,7 +74,7 @@ export default function NewOrderPage() {
         deliveryAddress: deliveryAddress.trim(),
         deliveryZoneId: deliveryZoneId || null,
         packagingOptionId: packagingOptionId || null,
-        createdByAdminId,
+        seller,
         items: toOrderItemPayloads(items),
         notes: notes.trim() || null,
         discountAmount: discountAmount > 0 ? discountAmount : null,
@@ -133,13 +128,13 @@ export default function NewOrderPage() {
           <label className="block text-sm font-medium text-brava-ink">¿Quién tomó el pedido?</label>
           <Select
             required
-            ariaLabel="Administrador que tomó el pedido"
-            placeholder="Selecciona un administrador"
-            value={createdByAdminId}
-            onValueChange={setCreatedByAdminId}
+            ariaLabel="Vendedora que tomó el pedido"
+            placeholder="Selecciona una vendedora"
+            value={seller}
+            onValueChange={setSeller}
             wrapperClassName="mt-1 block w-full sm:inline-block"
             className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm"
-            options={admins.map((a) => ({ value: a.id, label: a.email }))}
+            options={SELLERS.map((s) => ({ value: s, label: s }))}
           />
         </div>
 

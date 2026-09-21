@@ -7,13 +7,12 @@ import {
   adminGetOrder,
   adminUpdateOrderStatus,
   adminMarkOrderPaid,
-  adminAssignOrder,
-  adminGetAdmins,
+  adminAssignOrderSeller,
   ApiError,
+  SELLERS,
   type OrderDetailDto,
   type OrderStatus,
   type PaymentMethod,
-  type AdminListItemDto,
 } from "@/lib/api-admin";
 import { formatCop, PAYMENT_STATUS_LABELS, PAYMENT_METHOD_LABELS } from "@/lib/format";
 import { Select } from "@/components/Select";
@@ -40,8 +39,7 @@ export default function OrderDetailPage() {
   const [savingStatus, setSavingStatus] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Efectivo");
   const [markingPaid, setMarkingPaid] = useState(false);
-  const [admins, setAdmins] = useState<AdminListItemDto[]>([]);
-  const [selectedAdminId, setSelectedAdminId] = useState("");
+  const [selectedSeller, setSelectedSeller] = useState("");
   const [assigning, setAssigning] = useState(false);
 
   async function reload() {
@@ -62,27 +60,16 @@ export default function OrderDetailPage() {
     };
   }, [number]);
 
-  // Only needed to fill the "asignar admin" picker on a customer-created
-  // order, but cheap enough to just always fetch (same as the create form).
-  useEffect(() => {
-    adminGetAdmins()
-      .then(setAdmins)
-      .catch(() => {
-        // Non-fatal — the picker just won't have options; the rest of the
-        // page still works.
-      });
-  }, []);
-
-  async function handleAssignAdmin() {
-    if (!selectedAdminId) return;
+  async function handleAssignSeller() {
+    if (!selectedSeller) return;
     setAssigning(true);
     setError(null);
     try {
-      await adminAssignOrder(number, selectedAdminId);
-      setSelectedAdminId("");
+      await adminAssignOrderSeller(number, selectedSeller);
+      setSelectedSeller("");
       await reload();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Error al asignar el admin.");
+      setError(err instanceof ApiError ? err.message : "Error al asignar la vendedora.");
     } finally {
       setAssigning(false);
     }
@@ -169,26 +156,29 @@ export default function OrderDetailPage() {
             <p className="mt-2 text-xs text-brava-muted">Vinculado a un cliente registrado.</p>
           )}
           {order.notes && <p className="mt-2 text-sm text-brava-muted">Notas: {order.notes}</p>}
-          {order.createdByAdminEmail ? (
+          {order.seller ? (
+            <p className="mt-2 text-xs text-brava-muted">Vendedora: {order.seller}</p>
+          ) : order.createdByAdminEmail ? (
+            // Historical order, created before Seller existed.
             <p className="mt-2 text-xs text-brava-muted">Tomado por: {order.createdByAdminEmail}</p>
           ) : (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="text-xs text-brava-muted">Cliente (WhatsApp) ·</span>
               <Select
-                ariaLabel="Asignar admin"
-                value={selectedAdminId}
-                onValueChange={setSelectedAdminId}
+                ariaLabel="Asignar vendedora"
+                value={selectedSeller}
+                onValueChange={setSelectedSeller}
                 wrapperClassName="inline-block"
                 className="rounded-lg border border-brava-pink-light px-2 py-1 text-xs"
                 options={[
-                  { value: "", label: "Asignar admin…" },
-                  ...admins.map((a) => ({ value: a.id, label: a.email })),
+                  { value: "", label: "Asignar vendedora…" },
+                  ...SELLERS.map((s) => ({ value: s, label: s })),
                 ]}
               />
               <button
                 type="button"
-                onClick={handleAssignAdmin}
-                disabled={!selectedAdminId || assigning}
+                onClick={handleAssignSeller}
+                disabled={!selectedSeller || assigning}
                 className="text-xs font-medium text-brava-pink-dark hover:underline disabled:opacity-50"
               >
                 {assigning ? "Guardando…" : "Asignar"}

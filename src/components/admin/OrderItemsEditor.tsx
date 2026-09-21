@@ -191,6 +191,8 @@ export function OrderItemsEditor({
                 wrapperClassName="mt-1 inline-block"
                 className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm"
                 options={products.map((p) => ({ value: p.slug, label: `${p.name} (${p.brandName})` }))}
+                searchable
+                searchPlaceholder="Buscar producto…"
               />
             </div>
             <div>
