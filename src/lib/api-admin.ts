@@ -539,6 +539,45 @@ export async function adminUpdatePackagingOption(
   return res.json();
 }
 
+// --- Investments ---------------------------------------------------------
+
+// A business cost not tied to any order — marketing, equipment, supplies
+// bought in bulk, rent, subscriptions, etc. Tracked so Métricas' "Balance
+// neto" is realistic, not just order-level profit. date is the day the cost
+// was incurred (an ISO date string, "YYYY-MM-DD"), not when it was logged.
+export interface InvestmentDto {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+}
+
+export async function adminGetInvestments(filters?: { from?: string; to?: string }): Promise<InvestmentDto[]> {
+  const params = new URLSearchParams();
+  if (filters?.from) params.set("from", filters.from);
+  if (filters?.to) params.set("to", filters.to);
+  const qs = params.toString();
+  const res = await authedFetch(`/api/investments${qs ? `?${qs}` : ""}`);
+  return res.json();
+}
+
+export async function adminCreateInvestment(payload: {
+  description: string;
+  amount: number;
+  date: string;
+}): Promise<InvestmentDto> {
+  const res = await authedFetch("/api/investments", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+export async function adminDeleteInvestment(id: string): Promise<void> {
+  await authedFetch(`/api/investments/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
 // --- Orders (Phase 1) --------------------------------------------------
 
 // The API serializes these with JsonStringEnumConverter — string names over
@@ -752,6 +791,12 @@ export interface OrderMetricsDto {
   // in grossProfit alongside cogs.
   packagingCost: number;
   grossProfit: number;
+  // Sum of investments (marketing, equipment, rent, …) in this same
+  // from/to window — not order-related, tracked separately as Investments.
+  totalInvestments: number;
+  // grossProfit - totalInvestments — the realistic bottom line for the
+  // period, not just order-level profit.
+  netBalance: number;
   hasIncompleteCost: boolean;
 }
 

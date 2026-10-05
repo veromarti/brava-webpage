@@ -242,8 +242,29 @@ export default function AdminMetricsPage() {
                   : "ingresos por productos − costo de productos − empaque"
               }
             />
+            <Stat
+              label="Inversiones"
+              value={formatCop(orderMetrics.totalInvestments)}
+              note="publicidad, equipos, arriendo, etc."
+            />
+            <Stat
+              label="Balance neto"
+              value={formatCop(orderMetrics.netBalance)}
+              note={
+                orderMetrics.hasIncompleteCost
+                  ? "costo incompleto — cifra parcial"
+                  : "utilidad bruta − inversiones del período"
+              }
+            />
           </div>
         )}
+
+        <Link
+          href="/admin/investments"
+          className="mt-4 inline-block text-sm font-medium text-brava-pink-dark hover:underline"
+        >
+          Agregar o revisar inversiones →
+        </Link>
       </section>
 
       <section className="mt-10 border-t border-brava-pink-light pt-8">
