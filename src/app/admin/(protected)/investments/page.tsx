@@ -7,6 +7,7 @@ import {
   adminCreateInvestment,
   adminDeleteInvestment,
   ApiError,
+  type InvestmentCategory,
   type InvestmentDto,
 } from "@/lib/api-admin";
 import { IconButton } from "@/components/admin/IconButton";
@@ -15,6 +16,16 @@ import { formatCop } from "@/lib/format";
 function todayInputValue(): string {
   return new Date().toISOString().slice(0, 10);
 }
+
+const CATEGORY_LABELS: Record<InvestmentCategory, string> = {
+  CompraInventario: "Compra de inventario",
+  Marketing: "Publicidad",
+  Equipo: "Equipo",
+  Arriendo: "Arriendo",
+  Otro: "Otro",
+};
+
+const CATEGORY_OPTIONS = Object.keys(CATEGORY_LABELS) as InvestmentCategory[];
 
 // Admin-entered business costs not tied to any order — marketing, equipment,
 // supplies, rent, subscriptions. Simple log (add/delete, no edit): a typo is
@@ -28,6 +39,7 @@ export default function InvestmentsPage() {
 
   const [date, setDate] = useState(todayInputValue());
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<InvestmentCategory>("Otro");
   const [amount, setAmount] = useState("");
   const [creating, setCreating] = useState(false);
 
@@ -71,8 +83,9 @@ export default function InvestmentsPage() {
     setMessage(null);
     setCreating(true);
     try {
-      await adminCreateInvestment({ description: description.trim(), amount: parsedAmount, date });
+      await adminCreateInvestment({ description: description.trim(), category, amount: parsedAmount, date });
       setDescription("");
+      setCategory("Otro");
       setAmount("");
       setMessage("Inversión agregada.");
       await reload();
@@ -136,6 +149,25 @@ export default function InvestmentsPage() {
           />
         </div>
         <div>
+          <label className="block text-sm font-medium text-brava-ink">Categoría</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value as InvestmentCategory)}
+            className="mt-1 rounded-lg border border-brava-pink-light px-3 py-2 text-sm outline-none focus:border-brava-pink"
+          >
+            {CATEGORY_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {CATEGORY_LABELS[option]}
+              </option>
+            ))}
+          </select>
+          {category === "CompraInventario" && (
+            <p className="mt-1 max-w-[220px] text-xs text-brava-muted">
+              No se resta del balance neto — ese costo ya se cuenta cuando el producto se vende.
+            </p>
+          )}
+        </div>
+        <div>
           <label className="block text-sm font-medium text-brava-ink">Monto (COP)</label>
           <input
             type="number"
@@ -165,6 +197,7 @@ export default function InvestmentsPage() {
               <tr className="border-b border-brava-pink-light text-brava-muted">
                 <th className="py-2 font-medium">Fecha</th>
                 <th className="py-2 font-medium">Descripción</th>
+                <th className="py-2 font-medium">Categoría</th>
                 <th className="py-2 font-medium">Monto</th>
                 <th className="py-2 font-medium"></th>
               </tr>
@@ -176,6 +209,12 @@ export default function InvestmentsPage() {
                     {new Date(i.date).toLocaleDateString("es-CO", { timeZone: "UTC" })}
                   </td>
                   <td className="py-2 text-brava-ink">{i.description}</td>
+                  <td className="py-2 text-brava-muted">
+                    {CATEGORY_LABELS[i.category]}
+                    {i.category === "CompraInventario" && (
+                      <span className="ml-1 text-xs">(no afecta balance neto)</span>
+                    )}
+                  </td>
                   <td className="py-2 text-brava-ink">{formatCop(i.amount)}</td>
                   <td className="py-2">
                     <IconButton

@@ -245,7 +245,7 @@ export default function AdminMetricsPage() {
             <Stat
               label="Inversiones"
               value={formatCop(orderMetrics.totalInvestments)}
-              note="publicidad, equipos, arriendo, etc."
+              note="publicidad, equipos, arriendo, etc. — no incluye compra de inventario"
             />
             <Stat
               label="Balance neto"

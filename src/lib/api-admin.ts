@@ -541,6 +541,13 @@ export async function adminUpdatePackagingOption(
 
 // --- Investments ---------------------------------------------------------
 
+// The API serializes this with JsonStringEnumConverter — string names over
+// the wire, matching this union exactly.
+// CompraInventario is excluded from Métricas' "Inversiones"/"Balance neto":
+// that cost is already counted as "Costo de productos vendidos" once the
+// stock sells, so folding it into investments too would double-count it.
+export type InvestmentCategory = "CompraInventario" | "Marketing" | "Equipo" | "Arriendo" | "Otro";
+
 // A business cost not tied to any order — marketing, equipment, supplies
 // bought in bulk, rent, subscriptions, etc. Tracked so Métricas' "Balance
 // neto" is realistic, not just order-level profit. date is the day the cost
@@ -548,6 +555,7 @@ export async function adminUpdatePackagingOption(
 export interface InvestmentDto {
   id: string;
   description: string;
+  category: InvestmentCategory;
   amount: number;
   date: string;
 }
@@ -563,6 +571,7 @@ export async function adminGetInvestments(filters?: { from?: string; to?: string
 
 export async function adminCreateInvestment(payload: {
   description: string;
+  category: InvestmentCategory;
   amount: number;
   date: string;
 }): Promise<InvestmentDto> {
@@ -793,6 +802,8 @@ export interface OrderMetricsDto {
   grossProfit: number;
   // Sum of investments (marketing, equipment, rent, …) in this same
   // from/to window — not order-related, tracked separately as Investments.
+  // Excludes CompraInventario: that cost is already in cogs once the stock
+  // sells, so including it here too would double-count it.
   totalInvestments: number;
   // grossProfit - totalInvestments — the realistic bottom line for the
   // period, not just order-level profit.
