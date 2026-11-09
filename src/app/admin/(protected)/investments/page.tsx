@@ -211,9 +211,7 @@ export default function InvestmentsPage() {
                   <td className="py-2 text-brava-ink">{i.description}</td>
                   <td className="py-2 text-brava-muted">
                     {CATEGORY_LABELS[i.category]}
-                    {i.category === "CompraInventario" && (
-                      <span className="ml-1 text-xs">(no afecta balance neto)</span>
-                    )}
+                    {i.category === "CompraInventario"}
                   </td>
                   <td className="py-2 text-brava-ink">{formatCop(i.amount)}</td>
                   <td className="py-2">
