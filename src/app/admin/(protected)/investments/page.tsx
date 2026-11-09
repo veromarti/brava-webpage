@@ -11,6 +11,7 @@ import {
   type InvestmentDto,
 } from "@/lib/api-admin";
 import { IconButton } from "@/components/admin/IconButton";
+import { Select } from "@/components/Select";
 import { formatCop } from "@/lib/format";
 
 function todayInputValue(): string {
@@ -26,6 +27,7 @@ const CATEGORY_LABELS: Record<InvestmentCategory, string> = {
 };
 
 const CATEGORY_OPTIONS = Object.keys(CATEGORY_LABELS) as InvestmentCategory[];
+const CATEGORY_SELECT_OPTIONS = CATEGORY_OPTIONS.map((value) => ({ value, label: CATEGORY_LABELS[value] }));
 
 // Admin-entered business costs not tied to any order — marketing, equipment,
 // supplies, rent, subscriptions. Simple log (add/delete, no edit): a typo is
@@ -150,17 +152,15 @@ export default function InvestmentsPage() {
         </div>
         <div>
           <label className="block text-sm font-medium text-brava-ink">Categoría</label>
-          <select
+          <Select
+            required
+            ariaLabel="Categoría"
             value={category}
-            onChange={(e) => setCategory(e.target.value as InvestmentCategory)}
-            className="mt-1 rounded-lg border border-brava-pink-light px-3 py-2 text-sm outline-none focus:border-brava-pink"
-          >
-            {CATEGORY_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {CATEGORY_LABELS[option]}
-              </option>
-            ))}
-          </select>
+            onValueChange={(v) => setCategory(v as InvestmentCategory)}
+            options={CATEGORY_SELECT_OPTIONS}
+            wrapperClassName="mt-1 inline-block w-44"
+            className="rounded-lg border border-brava-pink-light px-3 py-2 text-sm"
+          />
           {category === "CompraInventario" && (
             <p className="mt-1 max-w-[220px] text-xs text-brava-muted">
               No se resta del balance neto — ese costo ya se cuenta cuando el producto se vende.

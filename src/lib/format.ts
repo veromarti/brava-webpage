@@ -9,6 +9,25 @@ export function formatCop(amount: number): string {
   return copFormatter.format(amount);
 }
 
+// Same "treat as a plain calendar day in UTC" convention as the rest of the
+// admin panel's date handling (Investments, Métricas' from/to) — periodStart
+// is a bucket boundary, not a moment, so it's formatted in UTC regardless of
+// the browser's local timezone.
+export function formatSeriesPeriodLabel(periodStart: string, granularity: "Day" | "Week" | "Month"): string {
+  const start = new Date(periodStart);
+  if (granularity === "Day") {
+    return start.toLocaleDateString("es-CO", { day: "2-digit", month: "short", timeZone: "UTC" });
+  }
+  if (granularity === "Week") {
+    const end = new Date(start);
+    end.setUTCDate(end.getUTCDate() + 6);
+    const startDay = start.toLocaleDateString("es-CO", { day: "2-digit", timeZone: "UTC" });
+    const endLabel = end.toLocaleDateString("es-CO", { day: "2-digit", month: "short", timeZone: "UTC" });
+    return `${startDay}–${endLabel}`;
+  }
+  return start.toLocaleDateString("es-CO", { month: "short", year: "numeric", timeZone: "UTC" });
+}
+
 // Accent/case-insensitive so typing "pestanina" still matches "Pestañina" —
 // most people don't bother with accents when they're just filtering a list.
 // Shared by Select's search box and any plain text-search filter (e.g. the

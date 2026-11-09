@@ -7,14 +7,17 @@ import {
   adminGetCatalogueMetrics,
   adminGetCatalogueHealthDetails,
   adminGetOrderMetrics,
+  adminGetOrderSeries,
   ApiError,
   type CatalogueMetricsDto,
   type CatalogueHealthDetailsDto,
   type OrderMetricsDto,
+  type OrderSeriesDto,
   type ProductHealthItemDto,
   type VariantHealthItemDto,
 } from "@/lib/api-admin";
-import { formatCop, variantLabel } from "@/lib/format";
+import { formatCop, formatSeriesPeriodLabel, variantLabel } from "@/lib/format";
+import { SalesChart } from "@/components/admin/SalesChart";
 
 function toDateInputValue(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -140,6 +143,8 @@ export default function AdminMetricsPage() {
   const [to, setTo] = useState(toDateInputValue(new Date()));
   const [orderMetrics, setOrderMetrics] = useState<OrderMetricsDto | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [orderSeries, setOrderSeries] = useState<OrderSeriesDto | null>(null);
+  const [seriesError, setSeriesError] = useState<string | null>(null);
 
   // Summary and drill-down details load independently — a details failure
   // shouldn't blank the numbers, and vice versa.
@@ -162,6 +167,20 @@ export default function AdminMetricsPage() {
       })
       .catch((err) => {
         if (!cancelled) setOrderError(err instanceof ApiError ? err.message : "Error al cargar los pedidos.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [from, to]);
+
+  useEffect(() => {
+    let cancelled = false;
+    adminGetOrderSeries({ from: from || undefined, to: to || undefined })
+      .then((data) => {
+        if (!cancelled) setOrderSeries(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setSeriesError(err instanceof ApiError ? err.message : "Error al cargar las ventas por período.");
       });
     return () => {
       cancelled = true;
@@ -258,6 +277,27 @@ export default function AdminMetricsPage() {
             />
           </div>
         )}
+
+        {seriesError && <p className="mt-4 text-sm text-red-600">{seriesError}</p>}
+
+        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <SalesChart
+            title="Ingresos por período"
+            points={(orderSeries?.points ?? []).map((p) => ({
+              label: formatSeriesPeriodLabel(p.periodStart, orderSeries!.granularity),
+              value: p.revenue,
+            }))}
+            formatValue={formatCop}
+          />
+          <SalesChart
+            title="Pedidos por período"
+            points={(orderSeries?.points ?? []).map((p) => ({
+              label: formatSeriesPeriodLabel(p.periodStart, orderSeries!.granularity),
+              value: p.ordersCount,
+            }))}
+            formatValue={(n) => String(n)}
+          />
+        </div>
 
         <Link
           href="/admin/investments"

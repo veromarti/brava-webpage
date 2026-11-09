@@ -858,3 +858,34 @@ export async function adminGetOrderMetrics(range?: { from?: string; to?: string 
   const res = await authedFetch(`/api/metrics/orders${qs ? `?${qs}` : ""}`);
   return res.json();
 }
+
+// The API serializes this with JsonStringEnumConverter — string names over
+// the wire, matching this union exactly.
+export type SeriesGranularity = "Day" | "Week" | "Month";
+
+// One point in the "ventas en el tiempo" chart. periodStart is an ISO date
+// string — the bucket's first day (Monday for Week, the 1st for Month).
+export interface OrderSeriesPointDto {
+  periodStart: string;
+  revenue: number;
+  ordersCount: number;
+}
+
+// Granularity is chosen server-side from the from/to span (see
+// MetricsEndpoints.GetOrderSeries) — day buckets for a short range, stepping
+// up to week then month so a wide range doesn't render hundreds of bars.
+export interface OrderSeriesDto {
+  from: string;
+  to: string;
+  granularity: SeriesGranularity;
+  points: OrderSeriesPointDto[];
+}
+
+export async function adminGetOrderSeries(range?: { from?: string; to?: string }): Promise<OrderSeriesDto> {
+  const params = new URLSearchParams();
+  if (range?.from) params.set("from", range.from);
+  if (range?.to) params.set("to", range.to);
+  const qs = params.toString();
+  const res = await authedFetch(`/api/metrics/orders/series${qs ? `?${qs}` : ""}`);
+  return res.json();
+}
