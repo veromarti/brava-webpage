@@ -20,7 +20,7 @@ export function Hero() {
           className="h-24 w-auto sm:h-28"
         />
         <h1 className="max-w-2xl font-display text-3xl text-brava-ink sm:text-4xl">
-          Maquillaje y skincare de 9 marcas, en un solo lugar
+          Todo lo que deseas y necesitas en un solo lugar
         </h1>
         <p className="max-w-xl text-brava-muted">
           Pide por WhatsApp, paga por transferencia o contraentrega, y recibe en Medellín.

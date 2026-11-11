@@ -10,9 +10,9 @@ export function BrandStrip({ brands }: { brands: BrandListItemDto[] }) {
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-10">
+    <section className="mx-auto max-w-6xl px-6 py-10 text-center">
       <h2 className="font-display text-2xl text-brava-ink">Nuestras marcas</h2>
-      <div className="mt-5 flex flex-wrap gap-3">
+      <div className="mt-5 flex flex-wrap justify-center gap-3">
         {brands.map((brand) => (
           <Link
             key={brand.slug}

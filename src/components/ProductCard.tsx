@@ -9,7 +9,7 @@ export function ProductCard({ product }: { product: ProductListItemDto }) {
   return (
     <Link
       href={`/products/${product.slug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-brava-pink-light bg-white transition-shadow hover:shadow-lg hover:shadow-brava-pink-light"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-brava-pink-light bg-white transition-shadow hover:shadow-lg hover:shadow-brava-pink-light"
     >
       <div className="relative aspect-square overflow-hidden bg-brava-pink-light">
         {product.imageUrl ? (
@@ -39,7 +39,7 @@ export function ProductCard({ product }: { product: ProductListItemDto }) {
       </div>
       <div className="flex flex-1 flex-col gap-1 p-4">
         <p className="text-xs uppercase tracking-wide text-brava-muted">{product.brandName}</p>
-        <h3 className="font-medium leading-snug text-brava-ink group-hover:text-brava-pink-dark">
+        <h3 className="line-clamp-2 font-medium leading-snug text-brava-ink group-hover:text-brava-pink-dark">
           {product.name}
         </h3>
         <p className="text-xs text-brava-muted">{product.categoryName}</p>
