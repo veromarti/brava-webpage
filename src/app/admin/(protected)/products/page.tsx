@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FaPencil, FaEyeSlash } from "react-icons/fa6";
+import { FaPencil, FaEyeSlash, FaStar, FaRegStar } from "react-icons/fa6";
 import {
   adminGetProducts,
   adminDeactivateProduct,
+  adminFeatureProduct,
+  adminUnfeatureProduct,
   adminExportCatalogue,
   adminImportCatalogue,
   AdminProductListItemDto,
@@ -19,6 +21,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProductListItemDto[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deactivatingSlug, setDeactivatingSlug] = useState<string | null>(null);
+  const [togglingFeaturedSlug, setTogglingFeaturedSlug] = useState<string | null>(null);
   const [brandFilter, setBrandFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [query, setQuery] = useState("");
@@ -85,6 +88,25 @@ export default function AdminProductsPage() {
       setError(err instanceof ApiError ? err.message : "Error al desactivar.");
     } finally {
       setDeactivatingSlug(null);
+    }
+  }
+
+  // One lightweight toggle call (not the full product PUT, which needs
+  // fields — description, brand, category — this list doesn't load).
+  async function handleToggleFeatured(p: AdminProductListItemDto) {
+    setTogglingFeaturedSlug(p.slug);
+    setError(null);
+    try {
+      if (p.isFeatured) {
+        await adminUnfeatureProduct(p.slug);
+      } else {
+        await adminFeatureProduct(p.slug);
+      }
+      await reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error al actualizar la novedad.");
+    } finally {
+      setTogglingFeaturedSlug(null);
     }
   }
 
@@ -249,6 +271,7 @@ export default function AdminProductsPage() {
                 <th className="py-2 font-medium">Categoría</th>
                 <th className="py-2 font-medium">Imágenes</th>
                 <th className="py-2 font-medium">Estado</th>
+                <th className="py-2 font-medium">Novedad</th>
                 <th className="py-2 font-medium">Acciones</th>
               </tr>
             </thead>
@@ -271,6 +294,15 @@ export default function AdminProductsPage() {
                     ) : (
                       <span className="text-brava-muted">Inactivo</span>
                     )}
+                  </td>
+                  <td className="py-2">
+                    <IconButton
+                      icon={p.isFeatured ? <FaStar aria-hidden /> : <FaRegStar aria-hidden />}
+                      label={p.isFeatured ? `Quitar ${p.name} de Novedades` : `Mostrar ${p.name} en Novedades`}
+                      tone={p.isFeatured ? "primary" : undefined}
+                      busy={togglingFeaturedSlug === p.slug}
+                      onClick={() => handleToggleFeatured(p)}
+                    />
                   </td>
                   <td className="py-2">
                     <div className="flex items-center gap-2">

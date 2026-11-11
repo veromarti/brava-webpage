@@ -66,6 +66,7 @@ export interface AdminProductListItemDto {
   brandName: string;
   categoryName: string;
   isActive: boolean;
+  isFeatured: boolean;
   imageCount: number;
 }
 
@@ -137,6 +138,7 @@ export interface UpdateProductPayload {
   brandId: string;
   categoryId: string;
   isActive: boolean;
+  isFeatured: boolean;
 }
 
 export async function adminUpdateProduct(slug: string, payload: UpdateProductPayload): Promise<ProductDto> {
@@ -150,6 +152,17 @@ export async function adminUpdateProduct(slug: string, payload: UpdateProductPay
 
 export async function adminDeactivateProduct(slug: string): Promise<void> {
   await authedFetch(`/api/products/${encodeURIComponent(slug)}`, { method: "DELETE" });
+}
+
+// Toggle for Product.IsFeatured — one lightweight call, unlike
+// adminUpdateProduct's full PUT which needs fields (description, brand,
+// category) the products list doesn't have loaded.
+export async function adminFeatureProduct(slug: string): Promise<void> {
+  await authedFetch(`/api/products/${encodeURIComponent(slug)}/feature`, { method: "POST" });
+}
+
+export async function adminUnfeatureProduct(slug: string): Promise<void> {
+  await authedFetch(`/api/products/${encodeURIComponent(slug)}/unfeature`, { method: "POST" });
 }
 
 // Reuses the bulk-stock endpoint with a single item — it only ever touches
@@ -324,6 +337,7 @@ export interface AdminProductDetailDto {
   brandId: string;
   categoryId: string;
   isActive: boolean;
+  isFeatured: boolean;
   variants: AdminVariantDto[];
   images: ImageDto[];
 }

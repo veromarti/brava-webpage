@@ -191,6 +191,7 @@ export default function EditProductPage() {
   const [brandId, setBrandId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [isFeatured, setIsFeatured] = useState(false);
 
   const [variantForm, setVariantForm] = useState(emptyVariantForm);
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
@@ -220,6 +221,7 @@ export default function EditProductPage() {
     setName(p.name);
     setDescription(p.description);
     setIsActive(p.isActive);
+    setIsFeatured(p.isFeatured);
     // brandId/categoryId come straight from the admin endpoint now — no
     // fragile match-by-name.
     setBrandId(p.brandId);
@@ -279,7 +281,7 @@ export default function EditProductPage() {
     setMessage(null);
     setSaving(true);
     try {
-      await adminUpdateProduct(slug, { name, description, brandId, categoryId, isActive });
+      await adminUpdateProduct(slug, { name, description, brandId, categoryId, isActive, isFeatured });
       setMessage("Producto guardado.");
       await reload();
     } catch (err) {
@@ -541,6 +543,10 @@ export default function EditProductPage() {
         <label className="flex items-center gap-2 text-sm text-brava-ink">
           <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
           Activo (visible en el catálogo público)
+        </label>
+        <label className="flex items-center gap-2 text-sm text-brava-ink">
+          <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} />
+          Novedad (aparece en &quot;Novedades&quot; en la página de inicio)
         </label>
         <button
           type="submit"
