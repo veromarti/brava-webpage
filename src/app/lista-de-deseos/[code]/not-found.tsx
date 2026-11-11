@@ -8,7 +8,7 @@ export default function SharedWishlistNotFound() {
         El enlace puede estar mal escrito o la lista ya no está disponible.
       </p>
       <Link
-        href="/"
+        href="/catalogo"
         className="mt-6 inline-block rounded-full bg-brava-pink px-6 py-2.5 font-medium text-white transition-colors hover:bg-brava-pink-dark"
       >
         Ver el catálogo

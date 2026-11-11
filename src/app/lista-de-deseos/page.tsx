@@ -83,7 +83,7 @@ export default function WishlistPage() {
       {items.length === 0 ? (
         <div className="mt-10 text-brava-muted">
           <p>Tu lista de deseos está vacía.</p>
-          <Link href="/" className="mt-2 inline-block text-brava-pink-dark hover:underline">
+          <Link href="/catalogo" className="mt-2 inline-block text-brava-pink-dark hover:underline">
             Ver el catálogo
           </Link>
         </div>

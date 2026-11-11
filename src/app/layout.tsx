@@ -49,7 +49,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   className="h-9 w-auto"
                 />
               </Link>
-              <WishlistNavLink />
+              <nav className="flex items-center gap-5">
+                <Link
+                  href="/catalogo"
+                  className="text-sm font-medium text-brava-ink transition-colors hover:text-brava-pink-dark"
+                >
+                  Catálogo
+                </Link>
+                <WishlistNavLink />
+              </nav>
             </div>
           </header>
 

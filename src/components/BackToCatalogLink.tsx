@@ -7,15 +7,15 @@ import { useRouter } from "next/navigation";
 // only the browser's own back button, which isn't obvious to everyone.
 // Prefers router.back() when there's somewhere in this tab to go back to,
 // since that preserves whatever category/brand/search/sort/scroll state the
-// visitor had (a flat link to "/" would reset all of that); falls back to a
-// real navigation to "/" for a directly-opened product link, and still works
-// with JS disabled either way since the href is real.
+// visitor had (a flat link to "/catalogo" would reset all of that); falls
+// back to a real navigation to "/catalogo" for a directly-opened product
+// link, and still works with JS disabled either way since the href is real.
 export function BackToCatalogLink({ className }: { className?: string }) {
   const router = useRouter();
 
   return (
     <Link
-      href="/"
+      href="/catalogo"
       onClick={(e) => {
         if (window.history.length > 1) {
           e.preventDefault();

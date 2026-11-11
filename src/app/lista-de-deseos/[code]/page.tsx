@@ -207,7 +207,7 @@ export default async function SharedWishlistPage({ params }: Params) {
             className="rounded-full bg-brava-pink px-6 py-2.5 font-medium text-white transition-colors hover:bg-brava-pink-dark"
           />
         )}
-        <Link href="/" className="text-sm text-brava-muted hover:text-brava-pink-dark hover:underline">
+        <Link href="/catalogo" className="text-sm text-brava-muted hover:text-brava-pink-dark hover:underline">
           Ver el catálogo de BRAVA
         </Link>
       </div>

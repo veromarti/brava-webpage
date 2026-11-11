@@ -86,6 +86,40 @@ export async function getProducts(filters?: { brand?: string; category?: string 
   return res.json();
 }
 
+// Both of these back the landing page's curated rails. Neither endpoint
+// exists on the API yet (isNew is a manually-admin-flagged field still to
+// be added to Product; best-sellers needs to aggregate OrderItem.Quantity
+// over Entregado orders) — until they do, these 404 and the rail just
+// renders nothing rather than the page crashing. Swap the catch for a
+// thrown error once the real endpoints land, so a genuine failure doesn't
+// go silent forever.
+//
+// Deliberately /api/products/new, NOT /api/products?isNew=true: the plain
+// GET /api/products route already exists and ignores query params it
+// doesn't recognize, so that would return 200 with the whole catalogue
+// instead of 404ing — confirmed by actually hitting it. A dedicated path
+// falls through to the GET /api/products/{slug} 404 case instead, until a
+// real GET /api/products/new handler is mapped ahead of it.
+export async function getNewProducts(): Promise<ProductListItemDto[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/products/new`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function getBestSellers(): Promise<ProductListItemDto[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/products/best-sellers`, { next: { revalidate: 300 } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
 // Returns null on 404 so pages can call notFound() themselves rather than
 // this helper throwing on the one response shape that isn't an error.
 export async function getProductBySlug(slug: string): Promise<ProductDetailDto | null> {
